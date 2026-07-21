@@ -10,6 +10,7 @@ interface ListSortMenuProps {
   value: string;
   direction: ListSortDirection;
   onChange?: (value: string, direction: ListSortDirection) => void;
+  compact?: boolean;
 }
 
 const ListSortMenu = ({
@@ -17,6 +18,7 @@ const ListSortMenu = ({
   value,
   direction,
   onChange,
+  compact = false,
 }: ListSortMenuProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -60,9 +62,9 @@ const ListSortMenu = ({
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-medium shadow-sm transition-all duration-200 hover:border-primary/30"
+        className={`inline-flex items-center rounded-xl border border-border bg-white font-medium shadow-sm transition-all duration-200 hover:border-primary/30 ${compact ? "h-8 gap-1.5 px-3 text-xs" : "h-9 gap-2 px-4 text-sm"}`}
       >
-        <span className="text-slate-500">Sort By :</span>
+        {!compact && <span className="text-slate-500">Sort By :</span>}
         <span>{selectedOption?.label ?? "Select"}</span>
         <ChevronDown
           size={16}

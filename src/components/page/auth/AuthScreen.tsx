@@ -5,7 +5,12 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
-import { Button, Input, toast } from "@/src/components/ui";
+import {
+  Button,
+  Input,
+  startNavigationLoading,
+  toast,
+} from "@/src/components/ui";
 
 import AuthShell from "./AuthShell";
 import type { AuthMode, AuthScreenProps } from "./types";
@@ -58,6 +63,7 @@ const AuthScreen = ({
       description: "Welcome back to Stonebuild.",
     });
 
+    startNavigationLoading("Loading dashboard...");
     router.push("/");
   };
 

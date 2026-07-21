@@ -5,6 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
+import { startNavigationLoading } from "@/src/components/ui";
+
 import { menus } from "./menu";
 import { isRouteActive } from "./route";
 import SidebarGroup from "./SidebarGroup";
@@ -29,6 +31,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   const handleClick = (label: string, route: string) => {
     if (normalizedPath !== normalizePath(route)) {
+      startNavigationLoading(`Loading ${label.toLowerCase()}...`);
       router.push(route);
     }
   };

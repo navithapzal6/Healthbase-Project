@@ -21,16 +21,44 @@ const routeConfigs: Record<string, HeaderRouteConfig> = {
   },
   "/ledger": {
     title: "Ledger",
-    breadcrumbs: [{ label: "Dashboard", href: "/" }, { label: "Ledger List" }],
-  },
-  "/ledger/add": {
-    title: "Add Ledger",
-    backHref: "/ledger",
-    backLabel: "Back to Ledger List",
     breadcrumbs: [
       { label: "Dashboard", href: "/" },
-      { label: "Ledger List", href: "/ledger" },
-      { label: "Add Ledger" },
+      { label: "Ledger Workspace" },
+    ],
+  },
+  "/payment": {
+    title: "Payments",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/" },
+      { label: "Payments" },
+    ],
+  },
+  "/receipt": {
+    title: "Receipts",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/" },
+      { label: "Receipts" },
+    ],
+  },
+  "/expense": {
+    title: "Expense",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/" },
+      { label: "Expense" },
+    ],
+  },
+  "/user-log": {
+    title: "User Log",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/" },
+      { label: "User Log" },
+    ],
+  },
+  "/settings": {
+    title: "Settings",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/" },
+      { label: "Settings Workspace" },
     ],
   },
 };

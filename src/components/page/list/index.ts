@@ -3,6 +3,7 @@ export { default as ListHeader } from "./ListHeader";
 export { default as ListToolbar } from "./ListToolbar";
 export { default as ListContent } from "./ListContent";
 export { default as ListTable } from "./ListTable";
+export { default as Pagination } from "./Pagination";
 export { default as ListFilterPanel } from "./ListFilterPanel";
 export { default as ListSortMenu } from "./ListSortMenu";
 export { default as ListCheckbox } from "./ListCheckbox";

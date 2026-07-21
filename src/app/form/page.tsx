@@ -18,6 +18,7 @@ import {
   FormPage,
   FormSection,
   Input,
+  startNavigationLoading,
   Textarea,
   toast,
 } from "@/src/components";
@@ -32,8 +33,12 @@ const selectClassName = `
 export default function Page() {
   const router = useRouter();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const goToList = () => router.push("/list");
+  const goToList = () => {
+    startNavigationLoading("Loading contacts...");
+    router.push("/list");
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,13 +46,15 @@ export default function Page() {
     setSaveDialogOpen(true);
   };
 
-  const confirmSave = () => {
-    setSaveDialogOpen(false);
+  const confirmSave = async () => {
+    setSaving(true);
+    await new Promise((resolve) => setTimeout(resolve, 450));
     toast.success({
       title: "Contact Added",
       description: "The new contact was saved successfully.",
     });
 
+    setSaveDialogOpen(false);
     goToList();
   };
 
@@ -60,6 +67,7 @@ export default function Page() {
         cancelLabel="Cancel"
         onCancel={goToList}
         onSubmit={handleSubmit}
+        isSubmitting={saving}
       >
         <FormSection
           title="Personal Information"
@@ -268,8 +276,9 @@ export default function Page() {
         title="Save this contact?"
         description="Please confirm that the entered contact information is correct before saving."
         confirmText="Save Contact"
+        loading={saving}
         onConfirm={confirmSave}
-        onCancel={() => setSaveDialogOpen(false)}
+        onCancel={() => !saving && setSaveDialogOpen(false)}
       />
     </>
   );

@@ -16,7 +16,10 @@ const Textarea = ({
     <div className={cn(fullWidth && "w-full")}>
 
       {label && (
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label
+          htmlFor={props.id}
+          className="mb-2 block text-sm font-medium text-gray-700"
+        >
           {label}
         </label>
       )}

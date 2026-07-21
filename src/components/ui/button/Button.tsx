@@ -1,6 +1,7 @@
 import { cn } from "@/src/lib/utils";
 import { buttonVariants } from "./variants";
 import type { ButtonProps } from "./types";
+import Loader from "../loader/Loader";
 
 const Button = ({
   children,
@@ -30,7 +31,7 @@ const Button = ({
     >
       {loading ? (
         <>
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <Loader size="sm" tone="current" inline label="" />
           <span>Loading...</span>
         </>
       ) : (

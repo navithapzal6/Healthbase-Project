@@ -4,8 +4,6 @@ import type {
   ReactNode,
 } from "react";
 
-export type { PaginationProps } from "../../ui/pagination/types";
-
 export type ListSortDirection = "asc" | "desc";
 
 export interface ListSortOption {
@@ -20,6 +18,7 @@ export interface ListPageProps {
   filterOpen?: boolean;
   filterCount?: number;
   selectedCount?: number;
+  itemLabel?: string;
   onFilterClose?: () => void;
   onFilterApply?: () => void;
   onFilterReset?: () => void;
@@ -68,6 +67,7 @@ export interface ListFilterPanelProps {
 
 export interface ListBulkActionsProps {
   selectedCount: number;
+  itemLabel?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -89,4 +89,14 @@ export interface ListActionButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
   children: ReactNode;
+}
+
+export interface PaginationProps {
+  page?: number;
+  pageSize?: number;
+  totalItems?: number;
+  pageSizeOptions?: number[];
+  compact?: boolean;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }

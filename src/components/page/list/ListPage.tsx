@@ -16,6 +16,7 @@ const ListPage = ({
   filterOpen = false,
   filterCount = 0,
   selectedCount = 0,
+  itemLabel = "contact",
   showFilter = true,
   showAdd = true,
   addLabel,
@@ -50,6 +51,7 @@ const ListPage = ({
 
       <ListBulkActions
         selectedCount={selectedCount}
+        itemLabel={itemLabel}
         onEdit={onBulkEdit}
         onDelete={onBulkDelete}
       />

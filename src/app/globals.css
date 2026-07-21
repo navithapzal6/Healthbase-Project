@@ -194,6 +194,17 @@
   }
 }
 
+/* Shared segmented process loader */
+@keyframes loader-segment-fade {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.12;
+  }
+}
+
 @keyframes checkbox-bounce {
   0% {
     transform: scale(1);

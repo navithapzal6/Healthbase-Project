@@ -10,8 +10,8 @@ import {
   ListPage,
   ListRowActions,
   ListTable,
-  Loader,
   Pagination,
+  startNavigationLoading,
   toast,
 } from "@/src/components";
 import type { ListSortDirection, ListSortOption } from "@/src/components";
@@ -232,6 +232,7 @@ export default function Page() {
   const [contacts, setContacts] = useState(contactsData);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [draftFilters, setDraftFilters] =
     useState<ContactFilters>(emptyFilters);
@@ -241,14 +242,6 @@ export default function Page() {
   const [sortDirection, setSortDirection] = useState<ListSortDirection>("asc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingLabel, setLoadingLabel] = useState("Loading contacts...");
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIsLoading(false), 650);
-
-    return () => window.clearTimeout(timer);
-  }, []);
 
   const visibleContacts = useMemo(() => {
     const search = appliedFilters.search.trim().toLowerCase();
@@ -324,23 +317,21 @@ export default function Page() {
   };
 
   const editContact = (contactId: string) => {
+    startNavigationLoading("Loading contact form...");
     router.push(`/form?mode=edit&id=${contactId}`);
-  };
-
-  const openAddContact = () => {
-    setLoadingLabel("Opening Add Contact...");
-    setIsLoading(true);
-    router.push("/form");
   };
 
   const requestDelete = (contactIds: string[]) => {
     setPendingDeleteIds(contactIds);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const contactIds = pendingDeleteIds;
 
     if (contactIds.length === 0) return;
+
+    setDeleting(true);
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
     setContacts((current) =>
       current.filter((contact) => !contactIds.includes(contact.id)),
@@ -349,6 +340,7 @@ export default function Page() {
       current.filter((id) => !contactIds.includes(id)),
     );
     setPendingDeleteIds([]);
+    setDeleting(false);
 
     toast.success({
       title: "Contact Deleted",
@@ -375,10 +367,6 @@ export default function Page() {
 
   return (
     <>
-      {isLoading && (
-        <Loader variant="overlay" size="lg" label={loadingLabel} />
-      )}
-
       <ListPage
         title="Contact List"
         addLabel="Add Contact"
@@ -388,7 +376,10 @@ export default function Page() {
         sortOptions={sortOptions}
         sortValue={sortValue}
         sortDirection={sortDirection}
-        onAdd={openAddContact}
+        onAdd={() => {
+          startNavigationLoading("Loading contact form...");
+          router.push("/form");
+        }}
         onFilter={() => setFilterOpen((current) => !current)}
         onFilterClose={() => setFilterOpen(false)}
         onFilterApply={applyFilters}
@@ -616,8 +607,9 @@ export default function Page() {
         }
         description="This action removes the selected contact data from the list. Please confirm before continuing."
         confirmText="Delete"
+        loading={deleting}
         onConfirm={confirmDelete}
-        onCancel={() => setPendingDeleteIds([])}
+        onCancel={() => !deleting && setPendingDeleteIds([])}
       />
     </>
   );

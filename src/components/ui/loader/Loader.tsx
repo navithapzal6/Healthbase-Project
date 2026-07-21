@@ -1,71 +1,74 @@
-"use client";
+export interface LoaderProps {
+  label?: string;
+  fullScreen?: boolean;
+  inline?: boolean;
+  size?: "sm" | "md" | "lg";
+  tone?: "primary" | "success" | "current";
+  className?: string;
+}
 
-import { cn } from "@/src/lib/utils";
-
-import type { LoaderProps, LoaderSize } from "./types";
-
-const sizeClasses: Record<LoaderSize, string> = {
-  sm: "h-5 w-5",
-  md: "h-9 w-9",
-  lg: "h-14 w-14",
-};
-
-const spokeOpacity = [1, 0.88, 0.75, 0.62, 0.5, 0.38, 0.27, 0.18];
+const sizes = { sm: 18, md: 34, lg: 52 };
 
 const Loader = ({
-  className,
   label = "Loading...",
+  fullScreen = false,
+  inline = false,
   size = "md",
-  variant = "inline",
+  tone = "primary",
+  className = "",
 }: LoaderProps) => {
-  const indicator = (
+  const dimension = sizes[size];
+  const barWidth = Math.max(2, Math.round(dimension * 0.12));
+  const barHeight = Math.max(5, Math.round(dimension * 0.3));
+  const radius = dimension * 0.31;
+
+  const segmentColor =
+    tone === "current"
+      ? "bg-current"
+      : tone === "success"
+        ? "bg-success"
+        : "bg-primary";
+
+  return (
     <div
       role="status"
       aria-live="polite"
-      aria-label={label}
-      className={cn("flex items-center justify-center gap-3", className)}
+      aria-label={label || "Loading"}
+      className={`flex items-center justify-center gap-3 ${
+        fullScreen
+          ? "fixed inset-0 z-[9999] min-h-screen w-screen bg-background/80 backdrop-blur-[1px]"
+          : inline
+            ? ""
+            : "py-8"
+      } ${className}`}
     >
-      <div
+      <span
         aria-hidden="true"
-        className={cn("relative shrink-0 animate-spin", sizeClasses[size])}
+        className="relative inline-block shrink-0"
+        style={{ width: dimension, height: dimension }}
       >
-        {spokeOpacity.map((opacity, index) => (
+        {Array.from({ length: 12 }, (_, index) => (
           <span
             key={index}
-            className="absolute inset-0"
-            style={{ transform: `rotate(${index * 45}deg)` }}
-          >
-            <span
-              className="mx-auto block h-[32%] w-[13%] rounded-full bg-primary"
-              style={{ opacity }}
-            />
-          </span>
+            className={`absolute left-1/2 top-1/2 rounded-full ${segmentColor}`}
+            style={{
+              width: barWidth,
+              height: barHeight,
+              marginLeft: -barWidth / 2,
+              marginTop: -barHeight / 2,
+              transform: `rotate(${index * 30}deg) translateY(-${radius}px)`,
+              animation: "loader-segment-fade 1.2s linear infinite",
+              animationDelay: `${index * 0.1 - 1.1}s`,
+            }}
+          />
         ))}
-      </div>
+      </span>
 
-      {label && (
+      {label && !inline && (
         <span className="text-sm font-medium text-slate-600">{label}</span>
       )}
     </div>
   );
-
-  if (variant === "overlay") {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/85 backdrop-blur-[2px]">
-        {indicator}
-      </div>
-    );
-  }
-
-  if (variant === "content") {
-    return (
-      <div className="flex h-full min-h-48 items-center justify-center">
-        {indicator}
-      </div>
-    );
-  }
-
-  return indicator;
 };
 
 export default Loader;

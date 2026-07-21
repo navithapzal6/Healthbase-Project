@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 
 import "./globals.css";
 
-import { Toaster, AppShell } from "@/src/components";
+import { NavigationLoader, Toaster, AppShell } from "@/src/components";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +31,7 @@ export default function RootLayout({
       >
         <AppShell>{children}</AppShell>
 
+        <NavigationLoader />
         <Toaster />
       </body>
     </html>

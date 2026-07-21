@@ -4,10 +4,10 @@ import {
   Home,
   Users,
   BookOpen,
-  Target,
-  Wallet,
-  ShoppingBag,
-  BarChart3,
+  CreditCard,
+  HandCoins,
+  ReceiptIndianRupee,
+  History,
   Settings,
 } from "lucide-react";
 
@@ -49,40 +49,27 @@ export const menus: SidebarMenuItem[] = [
   },
 
   {
-    label: "Lead",
-    route: "/lead",
-    icon: Target,
+    label: "Payment",
+    route: "/payment",
+    icon: CreditCard,
   },
 
   {
-    label: "Purchase",
-    route: "/purchase",
-    icon: ShoppingBag,
+    label: "Receipt",
+    route: "/receipt",
+    icon: HandCoins,
   },
 
   {
     label: "Expense",
     route: "/expense",
-    icon: Wallet,
+    icon: ReceiptIndianRupee,
   },
 
   {
-    label: "Reports",
-    icon: BarChart3,
-    children: [
-      {
-        name: "Stocks",
-        route: "/reports/stocks",
-      },
-      {
-        name: "Day Book",
-        route: "/reports/day-book",
-      },
-      {
-        name: "Cash Book",
-        route: "/reports/cash-book",
-      },
-    ],
+    label: "User Log",
+    route: "/user-log",
+    icon: History,
   },
 
   {

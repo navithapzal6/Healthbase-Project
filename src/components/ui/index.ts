@@ -5,8 +5,10 @@ export * from "./checkbox";
 export * from "./toaster";
 export * from "./modal";
 export * from "./dialog";
+export * from "./collapsible-panel";
+export * from "./date-picker";
+export * from "./typeahead";
 export * from "./loader";
-export * from "./pagination";
 
 
 

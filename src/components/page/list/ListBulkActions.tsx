@@ -6,6 +6,7 @@ import type { ListBulkActionsProps } from "./types";
 
 const ListBulkActions = ({
   selectedCount,
+  itemLabel = "contact",
   onEdit,
   onDelete,
 }: ListBulkActionsProps) => {
@@ -15,7 +16,7 @@ const ListBulkActions = ({
     <div className="mb-3 flex min-h-11 flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] px-4 py-2">
       <p className="text-sm font-medium text-slate-700">
         <span className="text-primary">{selectedCount}</span>{" "}
-        {selectedCount === 1 ? "contact" : "contacts"} selected
+        {selectedCount === 1 ? itemLabel : `${itemLabel}s`} selected
       </p>
 
       <div className="flex items-center gap-2">

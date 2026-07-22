@@ -2,7 +2,6 @@ import type { SidebarMenuItem } from "./types";
 
 import {
   Home,
-  Users,
   BookOpen,
   CreditCard,
   HandCoins,
@@ -16,30 +15,6 @@ export const menus: SidebarMenuItem[] = [
     label: "Dashboard",
     route: "/",
     icon: Home,
-  },
-
-  {
-    label: "Essentials",
-    icon: Users,
-    children: [
-      {
-        name: "Contacts",
-        route: "/list",
-        matchRoutes: ["/form"],
-      },
-      {
-        name: "Materials",
-        route: "/materials",
-      },
-      {
-        name: "Equipments",
-        route: "/equipments",
-      },
-      {
-        name: "Warehouse",
-        route: "/warehouse",
-      },
-    ],
   },
 
   {

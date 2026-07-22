@@ -5,20 +5,6 @@ const routeConfigs: Record<string, HeaderRouteConfig> = {
     title: "Dashboard",
     greeting: true,
   },
-  "/list": {
-    title: "Contacts",
-    breadcrumbs: [{ label: "Dashboard", href: "/" }, { label: "Contact List" }],
-  },
-  "/form": {
-    title: "Add Contact",
-    backHref: "/list",
-    backLabel: "Back to Contacts",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Contact List", href: "/list" },
-      { label: "Add Contact" },
-    ],
-  },
   "/ledger": {
     title: "Ledger",
     breadcrumbs: [

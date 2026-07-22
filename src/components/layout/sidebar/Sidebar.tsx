@@ -9,7 +9,6 @@ import { startNavigationLoading } from "@/src/components/ui";
 
 import { menus } from "./menu";
 import { isRouteActive } from "./route";
-import SidebarGroup from "./SidebarGroup";
 import SidebarItem from "./SidebarItem";
 import type { SidebarProps } from "./types";
 
@@ -64,27 +63,12 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             menu.route &&
             isRouteActive(normalizedPath, menu.route, menu.matchRoutes);
 
-          if (menu.children) {
-            return (
-              <SidebarGroup
-                key={menu.label}
-                icon={menu.icon}
-                label={menu.label}
-                items={menu.children}
-                normalizedPath={normalizedPath}
-                collapsed={collapsed}
-                onExpand={onToggle}
-                onMenuClick={handleClick}
-              />
-            );
-          }
-
           return (
             <SidebarItem
               key={menu.label}
               icon={menu.icon}
               label={menu.label}
-              route={menu.route!}
+              route={menu.route}
               active={Boolean(active)}
               collapsed={collapsed}
               onClick={handleClick}

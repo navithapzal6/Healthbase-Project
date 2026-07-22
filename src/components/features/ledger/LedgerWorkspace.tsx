@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 
 import { ConfirmationDialog, toast } from "@/src/components/ui";
+import { logger } from "@/src/core/logger";
 
 import { initialLedgerRecords, ledgerSections } from "./data";
 import LedgerEntryForm from "./LedgerEntryForm";
@@ -18,6 +19,8 @@ import type {
 
 const isLedgerSection = (value: string | null): value is LedgerSectionId =>
   value === "unit" || value === "expense" || value === "bank";
+
+const ledgerLogger = logger.child("ledger");
 
 type PendingAction =
   | { type: "edit"; record: LedgerRecord }
@@ -67,7 +70,10 @@ const LedgerWorkspace = () => {
       description: values.description,
     };
 
-    console.log("Ledger API payload:", payload);
+    ledgerLogger.info("Ledger save requested", {
+      ledgerType: payload.ledgerType,
+      ledgerName: payload.ledgerName,
+    });
 
     const newRecord: LedgerRecord = {
       id: `${activeSection}-${Date.now()}`,
@@ -88,7 +94,10 @@ const LedgerWorkspace = () => {
   };
 
   const confirmEditLedger = (record: LedgerRecord) => {
-    console.log("Edit ledger record:", record);
+    ledgerLogger.debug("Ledger selected for edit", {
+      ledgerType: activeSection,
+      id: record.id,
+    });
     toast.info({
       title: "Ledger Selected",
       description: `${record.name} is ready to edit.`,
@@ -96,6 +105,11 @@ const LedgerWorkspace = () => {
   };
 
   const confirmDeleteLedgers = (recordIds: string[]) => {
+    ledgerLogger.info("Ledger records deleted", {
+      ledgerType: activeSection,
+      count: recordIds.length,
+      ids: recordIds,
+    });
     setRecords((current) => ({
       ...current,
       [activeSection]: current[activeSection].filter(

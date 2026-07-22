@@ -1,5 +1,5 @@
-import { AuthScreen } from "@/src/components";
+import { SignupWorkspace } from "@/src/components/features/signup";
 
 export default function Page() {
-  return <AuthScreen initialMode="signup" />;
+  return <SignupWorkspace />;
 }

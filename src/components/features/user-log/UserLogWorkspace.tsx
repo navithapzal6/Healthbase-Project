@@ -12,6 +12,7 @@ import {
   type ListSortOption,
 } from "@/src/components/page/list";
 import { ConfirmationDialog, Input, toast } from "@/src/components/ui";
+import { logger } from "@/src/core/logger";
 
 import UserLogFilterFields from "./UserLogFilterFields";
 import UserLogTable from "./UserLogTable";
@@ -23,6 +24,8 @@ const emptyFilters: UserLogFilters = {
   search: "",
   userId: "",
 };
+
+const userLogLogger = logger.child("user-log");
 
 const sortOptions: ListSortOption[] = [
   { label: "Date", value: "date" },
@@ -52,9 +55,14 @@ const UserLogWorkspace = () => {
   useEffect(() => {
     let active = true;
 
-    userLogService.list().then((data) => {
-      if (active) setRecords(data);
-    });
+    userLogService
+      .list()
+      .then((data) => {
+        if (active) setRecords(data);
+      })
+      .catch((error) => {
+        userLogLogger.error("Unable to load user logs", error);
+      });
 
     return () => {
       active = false;
@@ -110,6 +118,7 @@ const UserLogWorkspace = () => {
   }, [page, totalPages]);
 
   const editUserLog = (record: UserLogRecord) => {
+    userLogLogger.debug("User log selected for edit", { id: record.id });
     toast.info({
       title: "User log selected",
       description: `${record.user} · ${formatLogReference(record)} is ready for the API edit flow.`,
@@ -127,6 +136,11 @@ const UserLogWorkspace = () => {
     setSelectedIds((current) =>
       current.filter((id) => !pendingDeleteIds.includes(id)),
     );
+
+    userLogLogger.info("User log records deleted", {
+      count: pendingDeleteIds.length,
+      ids: pendingDeleteIds,
+    });
 
     toast.success({
       title: "User log deleted",

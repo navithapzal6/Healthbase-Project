@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
@@ -11,9 +11,19 @@ import {
   startNavigationLoading,
   toast,
 } from "@/src/components/ui";
+import { clearFieldError } from "@/src/core/forms";
+import { logger } from "@/src/core/logger";
+import type { ValidationErrors } from "@/src/core/validation";
 
 import AuthShell from "./AuthShell";
-import type { AuthMode, AuthScreenProps } from "./types";
+import type {
+  AuthFormValues,
+  AuthMode,
+  AuthScreenProps,
+} from "./types";
+import { getAuthFormValues, validateAuthForm } from "./validation";
+
+const authLogger = logger.child("auth");
 
 const AuthScreen = ({
   initialMode = "login",
@@ -25,6 +35,7 @@ const AuthScreen = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors<AuthFormValues>>({});
   const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -36,10 +47,15 @@ const AuthScreen = ({
     [],
   );
 
+  const clearError = (field: keyof AuthFormValues) => {
+    setErrors((current) => clearFieldError(current, field));
+  };
+
   const switchMode = (nextMode: AuthMode) => {
     if (nextMode === mode) return;
 
     setMode(nextMode);
+    setErrors({});
     setShowPassword(false);
     setShowConfirmPassword(false);
 
@@ -52,11 +68,29 @@ const AuthScreen = ({
     }, 450);
   };
 
+  const validateForm = (form: HTMLFormElement, formMode: AuthMode) => {
+    const result = validateAuthForm(formMode, getAuthFormValues(form));
+    setErrors(result.errors);
+
+    if (!result.isValid) {
+      authLogger.warn("Authentication form validation failed", {
+        mode: formMode,
+        fields: Object.keys(result.errors),
+      });
+    }
+
+    return result;
+  };
+
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
 
+    const result = validateForm(event.currentTarget, "login");
+    if (!result.isValid) return;
+
+    setLoading(true);
     localStorage.setItem("stonebuild-auth", "authenticated");
+    authLogger.info("Login completed", { flow: "demo" });
 
     toast.success({
       title: "Login Successful",
@@ -70,17 +104,10 @@ const AuthScreen = ({
   const handleSignup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const password = String(formData.get("password") ?? "");
-    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+    const result = validateForm(event.currentTarget, "signup");
+    if (!result.isValid) return;
 
-    if (password !== confirmPassword) {
-      toast.error({
-        title: "Password Mismatch",
-        description: "Password and confirm password must be the same.",
-      });
-      return;
-    }
+    authLogger.info("Signup completed", { flow: "demo" });
 
     toast.success({
       title: "Account Created",
@@ -116,6 +143,7 @@ const AuthScreen = ({
         <form
           className="space-y-5"
           onSubmit={isLogin ? handleLogin : handleSignup}
+          noValidate
         >
           {!isLogin && (
             <Input
@@ -124,6 +152,8 @@ const AuthScreen = ({
               label="Full Name"
               placeholder="Enter your full name"
               autoComplete="name"
+              error={errors.fullName}
+              onChange={() => clearError("fullName")}
               required
             />
           )}
@@ -135,6 +165,8 @@ const AuthScreen = ({
             label="Email Address"
             placeholder="name@company.com"
             autoComplete="email"
+            error={errors.email}
+            onChange={() => clearError("email")}
             required
           />
 
@@ -146,6 +178,11 @@ const AuthScreen = ({
             placeholder="Enter your password"
             autoComplete={isLogin ? "current-password" : "new-password"}
             minLength={6}
+            error={errors.password}
+            onChange={() => {
+              clearError("password");
+              clearError("confirmPassword");
+            }}
             required
             rightIcon={
               <button
@@ -169,6 +206,8 @@ const AuthScreen = ({
               placeholder="Re-enter your password"
               autoComplete="new-password"
               minLength={6}
+              error={errors.confirmPassword}
+              onChange={() => clearError("confirmPassword")}
               required
               rightIcon={
                 <button

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ConfirmationDialog, toast } from "@/src/components/ui";
+import { logger } from "@/src/core/logger";
 
 import {
   mandatoryMenuOptions,
@@ -32,6 +33,8 @@ const isSettingsSection = (
 
 const createAccessId = (user: string, menuId: string) =>
   `user-access-${user.toLowerCase().replaceAll(" ", "-")}-${menuId}-${Date.now()}`;
+
+const settingsLogger = logger.child("settings");
 
 const SettingsWorkspace = () => {
   const router = useRouter();
@@ -64,11 +67,15 @@ const SettingsWorkspace = () => {
     Promise.all([
       settingsService.listUserAccess(),
       settingsService.listMandatories(),
-    ]).then(([accessData, mandatoryData]) => {
-      if (!active) return;
-      setUserAccessRecords(accessData);
-      setMandatoryRecords(mandatoryData);
-    });
+    ])
+      .then(([accessData, mandatoryData]) => {
+        if (!active) return;
+        setUserAccessRecords(accessData);
+        setMandatoryRecords(mandatoryData);
+      })
+      .catch((error) => {
+        settingsLogger.error("Unable to load settings data", error);
+      });
 
     return () => {
       active = false;
@@ -179,6 +186,10 @@ const SettingsWorkspace = () => {
         } assigned to ${editingUser}.`,
       });
     } catch (error) {
+      settingsLogger.error("Unable to assign user access", error, {
+        user: editingUser,
+        menuIds,
+      });
       toast.error({
         title: "Unable to assign access",
         description:
@@ -208,6 +219,10 @@ const SettingsWorkspace = () => {
         description: `${record.menu} access removed from ${record.user}.`,
       });
     } catch (error) {
+      settingsLogger.error("Unable to remove user access", error, {
+        user: editingUser,
+        menuId,
+      });
       toast.error({
         title: "Unable to remove access",
         description:
@@ -239,6 +254,10 @@ const SettingsWorkspace = () => {
         } assigned for ${editingMandatoryMenu.label}.`,
       });
     } catch (error) {
+      settingsLogger.error("Unable to assign mandatory fields", error, {
+        menuId: editingMandatoryMenu.id,
+        recordIds,
+      });
       toast.error({
         title: "Unable to assign fields",
         description:
@@ -267,6 +286,9 @@ const SettingsWorkspace = () => {
         description: `${record.field} is now unassigned for ${record.menu}.`,
       });
     } catch (error) {
+      settingsLogger.error("Unable to remove mandatory field", error, {
+        recordId,
+      });
       toast.error({
         title: "Unable to remove field",
         description:
@@ -314,6 +336,10 @@ const SettingsWorkspace = () => {
 
       setPendingDeleteIds([]);
     } catch (error) {
+      settingsLogger.error("Unable to clear settings assignments", error, {
+        section: activeSection,
+        recordIds: pendingDeleteIds,
+      });
       toast.error({
         title: "Unable to clear assignments",
         description:

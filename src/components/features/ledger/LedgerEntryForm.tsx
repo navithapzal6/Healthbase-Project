@@ -10,11 +10,14 @@ import {
   Input,
   Textarea,
 } from "@/src/components/ui";
+import { clearFieldError } from "@/src/core/forms";
+import type { ValidationErrors } from "@/src/core/validation";
 
 import type {
   LedgerEntryFormProps,
   LedgerFormValues,
 } from "./types";
+import { validateLedgerForm } from "./validation";
 
 const emptyValues: LedgerFormValues = {
   ledgerName: "",
@@ -23,7 +26,7 @@ const emptyValues: LedgerFormValues = {
 
 const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
   const [values, setValues] = useState(emptyValues);
-  const [errors, setErrors] = useState<Partial<LedgerFormValues>>({});
+  const [errors, setErrors] = useState<ValidationErrors<LedgerFormValues>>({});
   const [pendingValues, setPendingValues] =
     useState<LedgerFormValues | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,30 +42,22 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
     setErrors({});
   };
 
+  const updateField = <TField extends keyof LedgerFormValues>(
+    field: TField,
+    value: LedgerFormValues[TField],
+  ) => {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => clearFieldError(current, field));
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors: Partial<LedgerFormValues> = {};
-    const ledgerName = values.ledgerName.trim();
-    const description = values.description.trim();
+    const result = validateLedgerForm(values);
+    setErrors(result.errors);
 
-    if (!ledgerName) {
-      nextErrors.ledgerName = "Ledger name is required.";
-    } else if (ledgerName.length < 3) {
-      nextErrors.ledgerName = "Enter at least 3 characters.";
-    }
-
-    if (!description) {
-      nextErrors.description = "Description is required.";
-    } else if (description.length < 5) {
-      nextErrors.description = "Enter at least 5 characters.";
-    }
-
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0) return;
-
-    setPendingValues({ ledgerName, description });
+    if (!result.isValid) return;
+    setPendingValues(result.values);
   };
 
   const confirmSave = async () => {
@@ -87,22 +82,18 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
         </h2>
       </div>
 
-      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+      <form
+        className="flex min-h-0 flex-1 flex-col"
+        onSubmit={handleSubmit}
+        noValidate
+      >
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <Input
             id="ledger-name"
             label="Ledger Name *"
             placeholder={`Enter ${section.label.toLowerCase()} name`}
             value={values.ledgerName}
-            onChange={(event) => {
-              setValues((current) => ({
-                ...current,
-                ledgerName: event.target.value,
-              }));
-              if (errors.ledgerName) {
-                setErrors((current) => ({ ...current, ledgerName: undefined }));
-              }
-            }}
+            onChange={(event) => updateField("ledgerName", event.target.value)}
             error={errors.ledgerName}
             fullWidth
           />
@@ -112,24 +103,14 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
             label="Description *"
             placeholder="Enter a clear ledger description"
             value={values.description}
-            onChange={(event) => {
-              setValues((current) => ({
-                ...current,
-                description: event.target.value,
-              }));
-              if (errors.description) {
-                setErrors((current) => ({
-                  ...current,
-                  description: undefined,
-                }));
-              }
-            }}
+            onChange={(event) =>
+              updateField("description", event.target.value)
+            }
             error={errors.description}
             maxLength={200}
             size="sm"
             fullWidth
           />
-
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white p-4">

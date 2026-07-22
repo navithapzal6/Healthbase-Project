@@ -1,0 +1,81 @@
+.checkbox-box svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.box-path {
+  fill: none;
+  stroke: #cbd5e1;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 144;
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset .4s cubic-bezier(.4,0,.2,1),
+    stroke .3s,
+    stroke-width .3s;
+}
+
+.check-path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 25;
+  stroke-dashoffset: 25;
+  transition:
+    stroke-dashoffset .3s cubic-bezier(.34,1.56,.64,1) .15s;
+}
+
+.group:hover .box-path{
+  stroke:#94a3b8;
+  stroke-width:4;
+}
+
+.peer:checked + .checkbox-box{
+  background:var(--primary);
+  box-shadow:0 0 0 6px rgba(99,102,241,.20);
+  animation:checkbox-bounce .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+.peer:checked + .checkbox-box .box-path{
+  stroke:var(--primary);
+  stroke-dashoffset:144;
+  stroke-width:0;
+}
+
+.peer:checked + .checkbox-box .check-path{
+  stroke-dashoffset:0;
+}
+
+.peer:focus-visible + .checkbox-box{
+  outline:2px solid var(--primary);
+  outline-offset:4px;
+}
+.checkbox-error {
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.18);
+}
+
+@keyframes checkbox-bounce{
+
+0%{
+transform:scale(1);
+}
+
+30%{
+transform:scale(.85) rotate(-4deg);
+}
+
+70%{
+transform:scale(1.12) rotate(4deg);
+}
+
+100%{
+transform:scale(1);
+}
+
+}

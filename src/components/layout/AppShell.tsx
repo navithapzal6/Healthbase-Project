@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
+import { AuthGuard } from "../auth";
 import AppLayout from "./AppLayout";
 
 interface AppShellProps {
@@ -19,7 +20,11 @@ const AppShell = ({ children }: AppShellProps) => {
 
   if (isAuthPage) return <>{children}</>;
 
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <AuthGuard>
+      <AppLayout>{children}</AppLayout>
+    </AuthGuard>
+  );
 };
 
 export default AppShell;

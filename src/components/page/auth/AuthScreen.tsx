@@ -1,19 +1,22 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
 import {
   Button,
+  Checkbox,
+  Form,
   Input,
   startNavigationLoading,
   toast,
 } from "@/src/components/ui";
 import { clearFieldError } from "@/src/core/forms";
-import { logger } from "@/src/core/logger";
+import { authLogger, setAuthSession } from "@/src/core/auth";
 import type { ValidationErrors } from "@/src/core/validation";
+import { authService } from "./service";
 
 import AuthShell from "./AuthShell";
 import type {
@@ -23,7 +26,6 @@ import type {
 } from "./types";
 import { getAuthFormValues, validateAuthForm } from "./validation";
 
-const authLogger = logger.child("auth");
 
 const AuthScreen = ({
   initialMode = "login",
@@ -82,39 +84,95 @@ const AuthScreen = ({
     return result;
   };
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (
+    event: SubmitEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     const result = validateForm(event.currentTarget, "login");
+
     if (!result.isValid) return;
 
     setLoading(true);
-    localStorage.setItem("stonebuild-auth", "authenticated");
-    authLogger.info("Login completed", { flow: "demo" });
 
-    toast.success({
-      title: "Login Successful",
-      description: "Welcome back to Stonebuild.",
-    });
+    try {
+      const response = await authService.login({
+        email: result.values.email,
+        password: result.values.password,
+      });
 
-    startNavigationLoading("Loading dashboard...");
-    router.push("/");
+      setAuthSession({
+        token: response.data.token,
+        user: response.data.user,
+      });
+
+      authLogger.info("Login completed", {
+        userId: response.data.user.id,
+      });
+
+      toast.success({
+        title: "Login Successful",
+        description: response.message,
+      });
+
+      startNavigationLoading("Loading dashboard...");
+      router.replace("/dashboard");
+    } catch (error) {
+      authLogger.error("Login failed", error);
+
+      toast.error({
+        title: "Login Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to login.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignup = (event: FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (
+    event: SubmitEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     const result = validateForm(event.currentTarget, "signup");
+
     if (!result.isValid) return;
 
-    authLogger.info("Signup completed", { flow: "demo" });
+    setLoading(true);
 
-    toast.success({
-      title: "Account Created",
-      description: "Your account is ready. Please login to continue.",
-    });
+    try {
+      const response = await authService.signup({
+        name: result.values.fullName,
+        email: result.values.email,
+        password: result.values.password,
+      });
 
-    switchMode("login");
+      authLogger.info("Signup completed", {
+        userId: response.data.user.id,
+      });
+
+      toast.success({
+        title: "Account Created",
+        description: "Your account is ready. Please login.",
+      });
+
+      switchMode("login");
+    } catch (error) {
+      authLogger.error("Signup failed", error);
+
+      toast.error({
+        title: "Signup Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to create account.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isLogin = mode === "login";
@@ -140,7 +198,7 @@ const AuthScreen = ({
           </p>
         </div>
 
-        <form
+        <Form
           className="space-y-5"
           onSubmit={isLogin ? handleLogin : handleSignup}
           noValidate
@@ -185,7 +243,7 @@ const AuthScreen = ({
             }}
             required
             rightIcon={
-              <button
+              <Button unstyled
                 type="button"
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
@@ -193,7 +251,7 @@ const AuthScreen = ({
                 className="rounded-md p-1 text-slate-400 hover:text-primary"
               >
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
+              </Button>
             }
           />
 
@@ -210,7 +268,7 @@ const AuthScreen = ({
               onChange={() => clearError("confirmPassword")}
               required
               rightIcon={
-                <button
+                <Button unstyled
                   type="button"
                   tabIndex={-1}
                   aria-label={
@@ -226,7 +284,7 @@ const AuthScreen = ({
                   ) : (
                     <Eye size={17} />
                   )}
-                </button>
+                </Button>
               }
             />
           )}
@@ -234,20 +292,20 @@ const AuthScreen = ({
           {isLogin && (
             <div className="flex items-center justify-between text-sm">
               <label className="flex cursor-pointer items-center gap-2 text-slate-600">
-                <input
-                  type="checkbox"
+                <Checkbox
+                  unstyled
                   name="rememberMe"
                   className="h-4 w-4 rounded accent-[var(--primary)]"
                 />
                 Remember me
               </label>
 
-              <button
+              <Button unstyled
                 type="button"
                 className="font-medium text-primary hover:underline"
               >
                 Forgot password?
-              </button>
+              </Button>
             </div>
           )}
 
@@ -259,20 +317,20 @@ const AuthScreen = ({
           >
             {isLogin ? "Login" : "Create Account"}
           </Button>
-        </form>
+        </Form>
 
         <div className="mt-7 flex items-center justify-center gap-1.5 text-sm text-slate-500">
           <span>
             {isLogin ? "Don't have an account?" : "Already have an account?"}
           </span>
-          <button
+          <Button unstyled
             type="button"
             onClick={() => switchMode(isLogin ? "signup" : "login")}
             className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             {isLogin ? "Sign up" : "Login"}
             <ArrowRight size={14} />
-          </button>
+          </Button>
         </div>
       </div>
     </AuthShell>

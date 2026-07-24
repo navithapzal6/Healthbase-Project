@@ -3,3 +3,4 @@ export { default as AuthShell } from "./AuthShell";
 
 export * from "./types";
 export * from "./validation";
+export * from "./service";

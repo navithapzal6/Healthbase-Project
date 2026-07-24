@@ -3,6 +3,8 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 
+import { Button } from "@/src/components/ui";
+
 interface SplitModalProps {
   open: boolean;
   title: string;
@@ -65,14 +67,14 @@ const SplitModal = ({
               <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
             )}
           </div>
-          <button
+          <Button unstyled
             type="button"
             aria-label="Close"
             onClick={onClose}
             className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </header>
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.85fr)]">
           <div className="flex min-h-0 flex-col border-b border-slate-200 lg:border-b-0 lg:border-r">

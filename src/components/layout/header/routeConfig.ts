@@ -1,51 +1,46 @@
 import type { BreadcrumbItem, HeaderRouteConfig } from "./types";
 
+const dashboardBreadcrumb: BreadcrumbItem = {
+  label: "Dashboard",
+  href: "/dashboard",
+};
+
 const routeConfigs: Record<string, HeaderRouteConfig> = {
-  "/": {
+  "/dashboard": {
     title: "Dashboard",
     greeting: true,
   },
   "/ledger": {
     title: "Ledger",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Ledger Workspace" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "Ledger Workspace" }],
   },
   "/payment": {
     title: "Payments",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Payments" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "Payments" }],
   },
   "/receipt": {
     title: "Receipts",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Receipts" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "Receipts" }],
   },
   "/expense": {
     title: "Expense",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Expense" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "Expense" }],
   },
   "/user-log": {
     title: "User Log",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "User Log" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "User Log" }],
+  },
+  "/purchase": {
+    title: "Purchase",
+    breadcrumbs: [dashboardBreadcrumb, { label: "Purchase" }],
+  },
+  "/out-patient": {
+    title: "Out Patient",
+    breadcrumbs: [dashboardBreadcrumb, { label: "Out Patient" }],
   },
   "/settings": {
     title: "Settings",
-    breadcrumbs: [
-      { label: "Dashboard", href: "/" },
-      { label: "Settings Workspace" },
-    ],
+    breadcrumbs: [dashboardBreadcrumb, { label: "Settings Workspace" }],
   },
 };
 
@@ -58,11 +53,13 @@ const toLabel = (value: string) =>
 
 const buildFallbackConfig = (pathname: string): HeaderRouteConfig => {
   const segments = pathname.split("/").filter(Boolean);
-  const breadcrumbs: BreadcrumbItem[] = [{ label: "Dashboard", href: "/" }];
+  const breadcrumbs: BreadcrumbItem[] = [dashboardBreadcrumb];
 
   segments.forEach((segment, index) => {
     const isLast = index === segments.length - 1;
     const href = `/${segments.slice(0, index + 1).join("/")}`;
+
+    if (href === "/dashboard") return;
 
     breadcrumbs.push({
       label: toLabel(segment),

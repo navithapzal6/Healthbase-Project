@@ -11,7 +11,7 @@ import {
   type ListSortDirection,
   type ListSortOption,
 } from "@/src/components/page/list";
-import { ConfirmationDialog, Input, toast } from "@/src/components/ui";
+import { Button, ConfirmationDialog, Input, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
 
 import UserLogFilterFields from "./UserLogFilterFields";
@@ -191,7 +191,7 @@ const UserLogWorkspace = () => {
               />
             </div>
 
-            <button
+            <Button unstyled
               type="button"
               onClick={() => setFilterOpen((current) => !current)}
               aria-expanded={filterOpen}
@@ -214,7 +214,7 @@ const UserLogWorkspace = () => {
                   {filterCount}
                 </span>
               )}
-            </button>
+            </Button>
 
             <ListSortMenu
               options={sortOptions}

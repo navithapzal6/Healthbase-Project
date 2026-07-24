@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export interface BreadcrumbItem {
   label: string;
@@ -8,6 +8,7 @@ export interface BreadcrumbItem {
 export interface HeaderUser {
   firstName: string;
   lastName?: string;
+  email?: string;
   role?: string;
   avatar?: string;
 }
@@ -26,6 +27,7 @@ export interface HeaderProps {
   onSearch?: (value: string) => void;
   onSettingsClick?: () => void;
   onNotificationClick?: () => void;
+  onLogout?: () => void;
   actions?: ReactNode;
   className?: string;
 }

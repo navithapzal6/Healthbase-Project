@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
-import { ConfirmationDialog, toast } from "@/src/components/ui";
+import { Button, ConfirmationDialog, Input, Select, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
 import {
   ListBulkActions,
@@ -308,14 +308,14 @@ const TransactionWorkspace = ({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
+            <Input unstyled
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={`Search ${config.plural.toLowerCase()}...`}
               className="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
-          <select
+          <Select unstyled
             value={mode}
             onChange={(event) => setMode(event.target.value)}
             className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-primary"
@@ -324,15 +324,15 @@ const TransactionWorkspace = ({
             {config.paymentModes.map((item) => (
               <option key={item}>{item}</option>
             ))}
-          </select>
-          <button
+          </Select>
+          <Button unstyled
             type="button"
             onClick={() => setModalOpen(true)}
             className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-white shadow-sm transition hover:bg-primary/85"
           >
             <Plus className="h-4 w-4" />
             New {config.singular}
-          </button>
+          </Button>
         </div>
       </div>
 

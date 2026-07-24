@@ -1,5 +1,6 @@
 "use client";
 
+import { Form } from "@/src/components/ui";
 import { cn } from "@/src/lib/utils";
 
 import FormContent from "./FormContent";
@@ -36,7 +37,7 @@ const FormPage = ({
         onBack={onBack}
       />
 
-      <form className="flex min-h-0 flex-1 flex-col" onSubmit={onSubmit}>
+      <Form className="flex min-h-0 flex-1 flex-col" onSubmit={onSubmit}>
         <FormContent className={contentClassName}>{children}</FormContent>
 
         {footer ??
@@ -49,7 +50,7 @@ const FormPage = ({
               onCancel={onCancel}
             />
           ))}
-      </form>
+      </Form>
     </div>
   );
 };

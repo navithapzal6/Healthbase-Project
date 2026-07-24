@@ -4,6 +4,8 @@ import { forwardRef } from "react";
 
 import { cn } from "@/src/lib/utils";
 
+import styles from "./Table.module.css";
+
 import type {
   TableCellProps,
   TableContainerProps,
@@ -82,7 +84,7 @@ export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(
           "h-full min-h-0 overscroll-contain",
           allowHorizontalScroll
             ? "overflow-auto"
-            : "overflow-x-hidden overflow-y-auto",
+            : styles.autoColumnOverflow,
           viewportClassName,
         )}
       >

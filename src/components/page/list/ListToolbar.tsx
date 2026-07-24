@@ -2,6 +2,8 @@
 
 import { Filter, Plus } from "lucide-react";
 
+import { Button } from "@/src/components/ui";
+
 import ListSortMenu from "./ListSortMenu";
 import type { ListToolbarProps } from "./types";
 
@@ -31,7 +33,7 @@ const ListToolbar = ({
 
       <div className="flex flex-wrap items-center gap-3">
         {showFilter && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onFilter}
             aria-expanded={filterOpen}
@@ -52,7 +54,7 @@ const ListToolbar = ({
                 {filterCount}
               </span>
             )}
-          </button>
+          </Button>
         )}
 
         <ListSortMenu
@@ -63,14 +65,14 @@ const ListToolbar = ({
         />
 
         {showAdd && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onAdd}
             className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-white shadow-md transition-all duration-200 hover:bg-primary/75"
           >
             <Plus size={16} />
             {addLabel}
-          </button>
+          </Button>
         )}
       </div>
     </div>

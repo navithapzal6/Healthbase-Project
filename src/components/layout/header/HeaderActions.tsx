@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Settings } from "lucide-react";
+import { Button } from "@/src/components/ui";
 import { iconButtonVariants } from "./variants";
 
 interface HeaderActionsProps {
@@ -22,19 +23,19 @@ const HeaderActions = ({
     <div className="flex items-center gap-3">
       {/* Settings */}
       {showSettings && (
-        <button
+        <Button unstyled
           type="button"
           aria-label="Settings"
           onClick={onSettingsClick}
           className={iconButtonVariants()}
         >
           <Settings size={20} strokeWidth={2} />
-        </button>
+        </Button>
       )}
 
       {/* Notification */}
       {showNotification && (
-        <button
+        <Button unstyled
           type="button"
           aria-label="Notifications"
           onClick={onNotificationClick}
@@ -55,7 +56,7 @@ const HeaderActions = ({
               )}
             </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -14,7 +14,7 @@ const AuthShell = ({
   const isLogin = mode === "login";
 
   return (
-    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 p-4 sm:p-6">
+    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-slate-100">
       <div className="relative min-h-[620px] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
         <section
           className={`absolute inset-y-0 z-10 hidden w-1/2 overflow-hidden bg-gradient-to-br from-primary via-indigo-500 to-violet-600 p-10 text-white transition-[left] duration-500 ease-in-out md:flex md:flex-col md:justify-between ${

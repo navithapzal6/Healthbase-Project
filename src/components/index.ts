@@ -10,3 +10,5 @@ export * from "./templates";
 export * from "./features";
 
 // export * from "./common";
+
+export * from "./auth";

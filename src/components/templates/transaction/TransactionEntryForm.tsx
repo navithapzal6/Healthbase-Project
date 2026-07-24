@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { Eraser, Save } from "lucide-react";
 
-import { Button, DatePicker, Input, Textarea, Typeahead } from "@/src/components/ui";
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  Select,
+  Textarea,
+  Typeahead,
+} from "@/src/components/ui";
 import { clearFieldError } from "@/src/core/forms";
 import type { ValidationErrors } from "@/src/core/validation";
 
@@ -66,7 +74,7 @@ const TransactionEntryForm = ({
   };
 
   return (
-    <form onSubmit={submit} className="flex min-h-full flex-col" noValidate>
+    <Form onSubmit={submit} className="flex min-h-full flex-col" noValidate>
       <div className="space-y-4">
         <DatePicker
           id={`${singular.toLowerCase()}-date`}
@@ -96,7 +104,7 @@ const TransactionEntryForm = ({
           <span className="mb-1.5 block text-sm font-medium text-slate-700">
             Category / Purpose *
           </span>
-          <select
+          <Select unstyled
             value={values.category}
             onChange={(event) => set("category", event.target.value)}
             className={`h-11 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 ${
@@ -107,7 +115,7 @@ const TransactionEntryForm = ({
             {categories.map((item) => (
               <option key={item}>{item}</option>
             ))}
-          </select>
+          </Select>
           {errors.category && (
             <span className="mt-1 block text-xs text-red-600">
               {errors.category}
@@ -119,7 +127,7 @@ const TransactionEntryForm = ({
           <span className="mb-1.5 block text-sm font-medium text-slate-700">
             Payment Mode *
           </span>
-          <select
+          <Select unstyled
             value={values.paymentMode}
             onChange={(event) =>
               set(
@@ -135,7 +143,7 @@ const TransactionEntryForm = ({
             {paymentModes.map((item) => (
               <option key={item}>{item}</option>
             ))}
-          </select>
+          </Select>
           {errors.paymentMode && (
             <span className="mt-1 block text-xs text-red-600">
               {errors.paymentMode}
@@ -184,7 +192,7 @@ const TransactionEntryForm = ({
           Save {singular}
         </Button>
       </div>
-    </form>
+    </Form>
   );
 };
 

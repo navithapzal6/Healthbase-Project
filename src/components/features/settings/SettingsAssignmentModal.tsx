@@ -184,7 +184,7 @@ const SettingsAssignmentModal = ({
                       )}
                       {renderDetails(item.details)}
                     </div>
-                    <button
+                    <Button unstyled
                       type="button"
                       aria-label={`Remove ${item.label}`}
                       title={`Remove ${item.label}`}
@@ -193,7 +193,7 @@ const SettingsAssignmentModal = ({
                       className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>

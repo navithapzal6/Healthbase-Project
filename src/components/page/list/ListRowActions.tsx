@@ -2,6 +2,8 @@
 
 import { Pencil, Trash2 } from "lucide-react";
 
+import { Button } from "@/src/components/ui";
+
 import type { ListActionButtonProps, ListRowActionsProps } from "./types";
 
 const ActionButton = ({
@@ -10,7 +12,7 @@ const ActionButton = ({
   className = "",
   ...props
 }: ListActionButtonProps) => (
-  <button
+  <Button unstyled
     type="button"
     aria-label={label}
     title={label}
@@ -18,7 +20,7 @@ const ActionButton = ({
     {...props}
   >
     {children}
-  </button>
+  </Button>
 );
 
 const ListRowActions = ({

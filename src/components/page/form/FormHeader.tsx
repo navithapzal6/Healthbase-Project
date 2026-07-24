@@ -2,6 +2,8 @@
 
 import { ArrowLeft } from "lucide-react";
 
+import { Button } from "@/src/components/ui";
+
 import { formHeaderVariants } from "./variants";
 import type { FormHeaderProps } from "./types";
 
@@ -16,14 +18,14 @@ const FormHeader = ({
     <header className={formHeaderVariants()}>
       <div className="min-w-0">
         {onBack && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onBack}
             className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-primary"
           >
             <ArrowLeft size={15} strokeWidth={2.2} />
             {backLabel}
-          </button>
+          </Button>
         )}
 
         <h1 className="text-xl font-bold tracking-tight text-slate-900">

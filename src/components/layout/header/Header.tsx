@@ -24,6 +24,7 @@ const Header = ({
   onSearch,
   onSettingsClick,
   onNotificationClick,
+  onLogout,
 
   actions,
   className,
@@ -80,7 +81,7 @@ const Header = ({
           notificationCount={3}
         />
 
-        {user && <HeaderUser user={user} />}
+        {user && <HeaderUser user={user} onLogout={onLogout} />}
 
         {actions}
       </div>

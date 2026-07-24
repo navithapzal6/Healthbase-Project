@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/src/components/ui";
 import { contacts } from "@/src/dummy-data/contacts";
 
 import type { UserLogFilters } from "./types";
@@ -27,7 +28,7 @@ const UserLogFilterFields = ({
       >
         User
       </label>
-      <select
+      <Select unstyled
         id="user-log-user-filter"
         className={selectClassName}
         value={values.userId}
@@ -41,7 +42,7 @@ const UserLogFilterFields = ({
             {contact.name}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 };

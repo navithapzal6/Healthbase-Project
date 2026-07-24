@@ -22,3 +22,32 @@ export interface AuthScreenProps {
   showSocialLogin?: boolean;
   socialContent?: ReactNode;
 }
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  isActive: boolean;
+}
+
+export interface AuthData {
+  token: string;
+  user: AuthUser;
+}
+
+export interface AuthApiResponse {
+  success: boolean;
+  message: string;
+  data: AuthData;
+}

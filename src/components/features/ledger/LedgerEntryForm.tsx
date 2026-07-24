@@ -7,6 +7,7 @@ import { Eraser, Save } from "lucide-react";
 import {
   Button,
   ConfirmationDialog,
+  Form,
   Input,
   Textarea,
 } from "@/src/components/ui";
@@ -82,7 +83,7 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
         </h2>
       </div>
 
-      <form
+      <Form
         className="flex min-h-0 flex-1 flex-col"
         onSubmit={handleSubmit}
         noValidate
@@ -127,7 +128,7 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
             Save
           </Button>
         </div>
-      </form>
+      </Form>
 
       <ConfirmationDialog
         open={pendingValues !== null}

@@ -1,0 +1,69 @@
+/*
+ * Preserve the existing vertical scrolling exactly as-is.
+ * Horizontal scrolling is enabled only when there are more than five
+ * actual data fields.
+ *
+ * Utility columns do NOT count toward the five-field limit:
+ * - leading selection checkbox
+ * - trailing sticky Actions column
+ */
+.autoColumnOverflow {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 6+ actual fields: no checkbox, no Actions utility column. */
+.autoColumnOverflow:not(:has(thead > tr > th:first-child input[type="checkbox"])):not(
+    :has(thead > tr > th:last-child[class~="right-0"])
+  ):has(thead > tr > th:nth-child(6)) {
+  overflow-x: auto;
+}
+
+.autoColumnOverflow:not(:has(thead > tr > th:first-child input[type="checkbox"])):not(
+    :has(thead > tr > th:last-child[class~="right-0"])
+  ):has(thead > tr > th:nth-child(6)) > table {
+  width: calc(100% + 12rem);
+  min-width: calc(100% + 12rem);
+}
+
+/* Checkbox + 6+ actual fields. */
+.autoColumnOverflow:has(thead > tr > th:first-child input[type="checkbox"]):not(
+    :has(thead > tr > th:last-child[class~="right-0"])
+  ):has(thead > tr > th:nth-child(7)) {
+  overflow-x: auto;
+}
+
+.autoColumnOverflow:has(thead > tr > th:first-child input[type="checkbox"]):not(
+    :has(thead > tr > th:last-child[class~="right-0"])
+  ):has(thead > tr > th:nth-child(7)) > table {
+  width: calc(100% + 12rem);
+  min-width: calc(100% + 12rem);
+}
+
+/* 6+ actual fields + trailing Actions utility column. */
+.autoColumnOverflow:not(:has(thead > tr > th:first-child input[type="checkbox"])):has(
+    thead > tr > th:last-child[class~="right-0"]
+  ):has(thead > tr > th:nth-child(7)) {
+  overflow-x: auto;
+}
+
+.autoColumnOverflow:not(:has(thead > tr > th:first-child input[type="checkbox"])):has(
+    thead > tr > th:last-child[class~="right-0"]
+  ):has(thead > tr > th:nth-child(7)) > table {
+  width: calc(100% + 12rem);
+  min-width: calc(100% + 12rem);
+}
+
+/* Checkbox + 6+ actual fields + trailing Actions utility column. */
+.autoColumnOverflow:has(thead > tr > th:first-child input[type="checkbox"]):has(
+    thead > tr > th:last-child[class~="right-0"]
+  ):has(thead > tr > th:nth-child(8)) {
+  overflow-x: auto;
+}
+
+.autoColumnOverflow:has(thead > tr > th:first-child input[type="checkbox"]):has(
+    thead > tr > th:last-child[class~="right-0"]
+  ):has(thead > tr > th:nth-child(8)) > table {
+  width: calc(100% + 12rem);
+  min-width: calc(100% + 12rem);
+}

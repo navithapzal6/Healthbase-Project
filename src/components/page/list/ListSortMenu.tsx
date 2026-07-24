@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 
+import { Button, Input } from "@/src/components/ui";
+
 import type { ListSortDirection, ListSortOption } from "./types";
 
 interface ListSortMenuProps {
@@ -58,7 +60,7 @@ const ListSortMenu = ({
 
   return (
     <div ref={containerRef} className="relative">
-      <button
+      <Button unstyled
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
@@ -70,7 +72,7 @@ const ListSortMenu = ({
           size={16}
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         />
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute right-0 top-11 z-30 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
@@ -80,7 +82,7 @@ const ListSortMenu = ({
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
-              <input
+              <Input unstyled
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search fields"
@@ -91,7 +93,7 @@ const ListSortMenu = ({
 
           <div className="max-h-48 overflow-y-auto">
             {visibleOptions.map((option) => (
-              <button
+              <Button unstyled
                 key={option.value}
                 type="button"
                 onClick={() => selectField(option.value)}
@@ -101,14 +103,14 @@ const ListSortMenu = ({
                 {value === option.value && (
                   <Check size={16} className="text-primary" />
                 )}
-              </button>
+              </Button>
             ))}
           </div>
 
           <div className="my-2 border-t border-slate-100" />
 
           {(["asc", "desc"] as const).map((item) => (
-            <button
+            <Button unstyled
               key={item}
               type="button"
               onClick={() => selectDirection(item)}
@@ -120,7 +122,7 @@ const ListSortMenu = ({
             >
               {item === "asc" ? "Ascending" : "Descending"}
               {direction === item && <Check size={16} />}
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -1,17 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
 
 import Loader from "./Loader";
 
 const NAVIGATION_LOADING_EVENT = "stonebuild:navigation-loading";
 const MINIMUM_VISIBLE_TIME = 350;
 const SAFETY_TIMEOUT = 10000;
+const LOCATION_CHECK_INTERVAL = 25;
 
 interface NavigationLoadingDetail {
   label?: string;
 }
+
+const getCurrentLocation = () => {
+  if (typeof window === "undefined") return "/";
+
+  return `${window.location.pathname}${window.location.search}`;
+};
 
 export const startNavigationLoading = (label = "Loading page...") => {
   if (typeof window === "undefined") return;
@@ -24,30 +30,46 @@ export const startNavigationLoading = (label = "Loading page...") => {
 };
 
 const NavigationLoader = () => {
-  const pathname = usePathname() || "/";
   const [visible, setVisible] = useState(false);
   const [label, setLabel] = useState("Loading page...");
   const startedAt = useRef(0);
-  const startPath = useRef(pathname);
+  const startLocation = useRef("/");
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTimers = useCallback(() => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
     if (safetyTimer.current) clearTimeout(safetyTimer.current);
+    if (locationTimer.current) clearInterval(locationTimer.current);
+
     hideTimer.current = null;
     safetyTimer.current = null;
+    locationTimer.current = null;
   }, []);
+
+  const hideAfterMinimumTime = useCallback(() => {
+    const elapsed = Date.now() - startedAt.current;
+    const remaining = Math.max(0, MINIMUM_VISIBLE_TIME - elapsed);
+
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+
+    hideTimer.current = setTimeout(() => {
+      clearTimers();
+      setVisible(false);
+    }, remaining);
+  }, [clearTimers]);
 
   const showLoader = useCallback(
     (nextLabel = "Loading page...") => {
       clearTimers();
       startedAt.current = Date.now();
-      startPath.current = window.location.pathname;
+      startLocation.current = getCurrentLocation();
       setLabel(nextLabel);
       setVisible(true);
 
       safetyTimer.current = setTimeout(() => {
+        clearTimers();
         setVisible(false);
       }, SAFETY_TIMEOUT);
     },
@@ -86,9 +108,11 @@ const NavigationLoader = () => {
       const destination = new URL(anchor.href, window.location.href);
       const current = new URL(window.location.href);
       const isInternal = destination.origin === current.origin;
-      const changesPath = destination.pathname !== current.pathname;
+      const changesLocation =
+        destination.pathname !== current.pathname ||
+        destination.search !== current.search;
 
-      if (isInternal && changesPath) {
+      if (isInternal && changesLocation) {
         const destinationLabel = anchor.textContent?.trim() || "page";
         showLoader(`Loading ${destinationLabel.toLowerCase()}...`);
       }
@@ -108,21 +132,24 @@ const NavigationLoader = () => {
   }, [clearTimers, showLoader]);
 
   useEffect(() => {
-    if (!visible || pathname === startPath.current) return;
+    if (!visible) return;
 
-    const elapsed = Date.now() - startedAt.current;
-    const remaining = Math.max(0, MINIMUM_VISIBLE_TIME - elapsed);
+    locationTimer.current = setInterval(() => {
+      if (getCurrentLocation() === startLocation.current) return;
 
-    hideTimer.current = setTimeout(() => {
-      clearTimers();
-      setVisible(false);
-    }, remaining);
+      if (locationTimer.current) {
+        clearInterval(locationTimer.current);
+        locationTimer.current = null;
+      }
+
+      hideAfterMinimumTime();
+    }, LOCATION_CHECK_INTERVAL);
 
     return () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current);
-      hideTimer.current = null;
+      if (locationTimer.current) clearInterval(locationTimer.current);
+      locationTimer.current = null;
     };
-  }, [clearTimers, pathname, visible]);
+  }, [hideAfterMinimumTime, visible]);
 
   if (!visible) return null;
 

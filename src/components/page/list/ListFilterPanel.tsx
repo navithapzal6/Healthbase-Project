@@ -26,14 +26,14 @@ const ListFilterPanel = ({
           <h3 className="font-semibold text-slate-900">{title}</h3>
         </div>
 
-        <button
+        <Button unstyled
           type="button"
           onClick={onClose}
           aria-label="Close filters"
           className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
         >
           <X size={18} />
-        </button>
+        </Button>
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">

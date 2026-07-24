@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { Button } from "@/src/components/ui";
+
 import type { SidebarItemProps } from "./types";
 
 export default function SidebarItem({
@@ -20,7 +22,7 @@ export default function SidebarItem({
   };
 
   return (
-    <button
+    <Button unstyled
       type="button"
       title={collapsed ? label : undefined}
       aria-label={label}
@@ -41,6 +43,6 @@ export default function SidebarItem({
         }`}
       />
       {!collapsed && <span className="truncate">{label}</span>}
-    </button>
+    </Button>
   );
 }

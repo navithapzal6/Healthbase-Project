@@ -1,6 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
+
+import { Input } from "@/src/components/ui";
 import { searchVariants } from "./variants";
 
 interface HeaderSearchProps {
@@ -22,7 +24,7 @@ const HeaderSearch = ({
           </div>
 
           {/* Input */}
-          <input
+          <Input unstyled
             type="text"
             placeholder={placeholder}
             onChange={(e) => onSearch?.(e.target.value)}

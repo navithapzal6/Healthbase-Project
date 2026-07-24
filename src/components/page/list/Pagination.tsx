@@ -2,6 +2,8 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { Button, Select } from "@/src/components/ui";
+
 import type { PaginationProps } from "./types";
 
 const Pagination = ({
@@ -28,7 +30,7 @@ const Pagination = ({
         {onPageSizeChange && (
           <label className={`flex items-center text-slate-500 ${compact ? "gap-1 text-xs" : "gap-2 text-sm"}`}>
             Show
-            <select
+            <Select unstyled
               aria-label="Rows per page"
               value={pageSize}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
@@ -39,12 +41,12 @@ const Pagination = ({
                   {option} / page
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
 
         <div className={`flex items-center ${compact ? "gap-1" : "gap-2"}`}>
-          <button
+          <Button unstyled
             type="button"
             aria-label="Previous page"
             disabled={currentPage <= 1}
@@ -52,13 +54,13 @@ const Pagination = ({
             className={`${compact ? "h-7 w-7" : "h-8 w-8"} flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40`}
           >
             <ChevronLeft size={16} />
-          </button>
+          </Button>
 
           <span className={`${compact ? "min-w-10 text-xs" : "min-w-16 text-sm"} text-center font-medium text-slate-700`}>
             {currentPage} / {totalPages}
           </span>
 
-          <button
+          <Button unstyled
             type="button"
             aria-label="Next page"
             disabled={currentPage >= totalPages}
@@ -66,7 +68,7 @@ const Pagination = ({
             className={`${compact ? "h-7 w-7" : "h-8 w-8"} flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40`}
           >
             <ChevronRight size={16} />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

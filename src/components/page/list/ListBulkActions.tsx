@@ -2,6 +2,8 @@
 
 import { Pencil, Trash2 } from "lucide-react";
 
+import { Button } from "@/src/components/ui";
+
 import type { ListBulkActionsProps } from "./types";
 
 const ListBulkActions = ({
@@ -21,25 +23,25 @@ const ListBulkActions = ({
 
       <div className="flex items-center gap-2">
         {selectedCount === 1 && onEdit && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onEdit}
             className="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:border-primary/30 hover:text-primary"
           >
             <Pencil size={14} />
             Edit
-          </button>
+          </Button>
         )}
 
         {onDelete && (
-          <button
+          <Button unstyled
             type="button"
             onClick={onDelete}
             className="inline-flex h-8 items-center gap-2 rounded-lg border border-red-100 bg-white px-3 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
           >
             <Trash2 size={14} />
             Delete
-          </button>
+          </Button>
         )}
       </div>
     </div>

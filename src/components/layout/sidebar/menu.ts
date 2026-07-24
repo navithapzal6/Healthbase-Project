@@ -7,13 +7,15 @@ import {
   HandCoins,
   ReceiptIndianRupee,
   History,
+  ShoppingCart,
+  Stethoscope,
   Settings,
 } from "lucide-react";
 
 export const menus: SidebarMenuItem[] = [
   {
     label: "Dashboard",
-    route: "/",
+    route: "/dashboard",
     icon: Home,
   },
 
@@ -45,6 +47,32 @@ export const menus: SidebarMenuItem[] = [
     label: "User Log",
     route: "/user-log",
     icon: History,
+  },
+
+  {
+    label: "Purchase",
+    route: "/purchase",
+    icon: ShoppingCart,
+  },
+
+  {
+    label: "Out Patient",
+    route: "/out-patient",
+    icon: Stethoscope,
+    items: [
+      {
+        label: "Patient",
+        route: "/out-patient?section=patient",
+      },
+      {
+        label: "Consultation",
+        route: "/out-patient?section=consultation",
+      },
+      {
+        label: "Pharmacy",
+        route: "/out-patient?section=pharmacy",
+      },
+    ],
   },
 
   {

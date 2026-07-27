@@ -34,6 +34,19 @@ const isSettingsSection = (
 const createAccessId = (user: string, menuId: string) =>
   `user-access-${user.toLowerCase().replaceAll(" ", "-")}-${menuId}-${Date.now()}`;
 
+type PendingAssignmentAction =
+  | {
+      type: "assign";
+      section: SettingsSectionId;
+      itemIds: string[];
+    }
+  | {
+      type: "remove";
+      section: SettingsSectionId;
+      itemId: string;
+      itemLabel: string;
+    };
+
 const settingsLogger = logger.child("settings");
 
 const SettingsWorkspace = () => {
@@ -52,6 +65,8 @@ const SettingsWorkspace = () => {
     string | null
   >(null);
   const [savingAssignment, setSavingAssignment] = useState(false);
+  const [pendingAssignmentAction, setPendingAssignmentAction] =
+    useState<PendingAssignmentAction | null>(null);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
 
@@ -132,11 +147,13 @@ const SettingsWorkspace = () => {
     setActiveSection(nextSection);
     setEditingUser(null);
     setEditingMandatoryMenuId(null);
+    setPendingAssignmentAction(null);
     setPendingDeleteIds([]);
     router.replace(`/settings?section=${nextSection}`, { scroll: false });
   };
 
   const editSetting = (target: SettingsEditTarget) => {
+    setPendingAssignmentAction(null);
     setPendingDeleteIds([]);
 
     if (target.section === "user-access") {
@@ -350,6 +367,33 @@ const SettingsWorkspace = () => {
     }
   };
 
+  const confirmAssignmentAction = async () => {
+    if (!pendingAssignmentAction) return;
+
+    const action = pendingAssignmentAction;
+
+    if (action.section === "user-access") {
+      if (action.type === "assign") {
+        await assignUserMenus(action.itemIds);
+      } else {
+        await removeUserMenu(action.itemId);
+      }
+    } else if (action.type === "assign") {
+      await assignMandatoryFields(action.itemIds);
+    } else {
+      await removeMandatoryField(action.itemId);
+    }
+
+    setPendingAssignmentAction(null);
+  };
+
+  const pendingAssignmentItemName =
+    pendingAssignmentAction?.section === "user-access" ? "menu" : "field";
+  const pendingAssignmentCount =
+    pendingAssignmentAction?.type === "assign"
+      ? pendingAssignmentAction.itemIds.length
+      : 1;
+
   return (
     <>
       <div className="flex h-full min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -383,9 +427,29 @@ const SettingsWorkspace = () => {
         itemLabel="menu"
         items={userAssignmentItems}
         saving={savingAssignment}
-        onClose={() => !savingAssignment && setEditingUser(null)}
-        onAssign={assignUserMenus}
-        onRemove={removeUserMenu}
+        onClose={() =>
+          !savingAssignment &&
+          !pendingAssignmentAction &&
+          setEditingUser(null)
+        }
+        onAssign={(itemIds) =>
+          setPendingAssignmentAction({
+            type: "assign",
+            section: "user-access",
+            itemIds,
+          })
+        }
+        onRemove={(itemId) => {
+          const item = userAssignmentItems.find(
+            (option) => option.id === itemId,
+          );
+          setPendingAssignmentAction({
+            type: "remove",
+            section: "user-access",
+            itemId,
+            itemLabel: item?.label ?? "menu access",
+          });
+        }}
       />
 
       <SettingsAssignmentModal
@@ -402,10 +466,59 @@ const SettingsWorkspace = () => {
         items={mandatoryAssignmentItems}
         saving={savingAssignment}
         onClose={() =>
-          !savingAssignment && setEditingMandatoryMenuId(null)
+          !savingAssignment &&
+          !pendingAssignmentAction &&
+          setEditingMandatoryMenuId(null)
         }
-        onAssign={assignMandatoryFields}
-        onRemove={removeMandatoryField}
+        onAssign={(itemIds) =>
+          setPendingAssignmentAction({
+            type: "assign",
+            section: "mandatories",
+            itemIds,
+          })
+        }
+        onRemove={(itemId) => {
+          const item = mandatoryAssignmentItems.find(
+            (option) => option.id === itemId,
+          );
+          setPendingAssignmentAction({
+            type: "remove",
+            section: "mandatories",
+            itemId,
+            itemLabel: item?.label ?? "mandatory field",
+          });
+        }}
+      />
+
+      <ConfirmationDialog
+        open={pendingAssignmentAction !== null}
+        title={
+          pendingAssignmentAction?.type === "remove"
+            ? `Remove ${pendingAssignmentItemName}?`
+            : `Assign selected ${pendingAssignmentItemName}${
+                pendingAssignmentCount === 1 ? "" : "s"
+              }?`
+        }
+        description={
+          pendingAssignmentAction?.type === "remove"
+            ? `${pendingAssignmentAction.itemLabel} will be removed from the current assignment.`
+            : `${pendingAssignmentCount} selected ${
+                pendingAssignmentCount === 1
+                  ? pendingAssignmentItemName
+                  : `${pendingAssignmentItemName}s`
+              } will be assigned.`
+        }
+        confirmText={
+          pendingAssignmentAction?.type === "remove" ? "Remove" : "Assign"
+        }
+        variant={
+          pendingAssignmentAction?.type === "remove" ? "danger" : "primary"
+        }
+        loading={savingAssignment}
+        onConfirm={confirmAssignmentAction}
+        onCancel={() =>
+          !savingAssignment && setPendingAssignmentAction(null)
+        }
       />
 
       <ConfirmationDialog

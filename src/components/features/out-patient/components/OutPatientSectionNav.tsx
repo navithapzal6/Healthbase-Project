@@ -4,13 +4,13 @@ import { ClipboardList, Pill, User } from "lucide-react";
 
 import { SectionNav, type SectionNavItem } from "@/src/components/ui";
 
-import { outPatientSections } from "./data";
-import type { OutPatientSectionId, OutPatientSectionNavProps } from "./types";
+import { outPatientSections } from "../data";
+import type { OutPatientSectionId, OutPatientSectionNavProps } from "../types";
 
 const sectionIcons = {
   patient: User,
   consultation: ClipboardList,
-  pharmacy: Pill,
+  prescription: Pill,
 };
 
 const items: SectionNavItem<OutPatientSectionId>[] = outPatientSections.map(

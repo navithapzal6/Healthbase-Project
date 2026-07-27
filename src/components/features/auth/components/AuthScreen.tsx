@@ -1,30 +1,24 @@
 "use client";
 
-import type { SubmitEvent } from "react";
+import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import {
   Button,
-  Checkbox,
-  Form,
-  Input,
   startNavigationLoading,
   toast,
 } from "@/src/components/ui";
 import { clearFieldError } from "@/src/core/forms";
 import { authLogger, setAuthSession } from "@/src/core/auth";
 import type { ValidationErrors } from "@/src/core/validation";
-import { authService } from "./service";
+import { authService } from "../api/authService";
 
 import AuthShell from "./AuthShell";
-import type {
-  AuthFormValues,
-  AuthMode,
-  AuthScreenProps,
-} from "./types";
-import { getAuthFormValues, validateAuthForm } from "./validation";
+import AuthForm from "../forms/AuthForm";
+import type { AuthFormValues, AuthMode, AuthScreenProps } from "../types";
+import { getAuthFormValues, validateAuthForm } from "../validation";
 
 
 const AuthScreen = ({
@@ -34,8 +28,6 @@ const AuthScreen = ({
 }: AuthScreenProps) => {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors<AuthFormValues>>({});
   const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,9 +50,6 @@ const AuthScreen = ({
 
     setMode(nextMode);
     setErrors({});
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-
     if (navigationTimer.current) {
       clearTimeout(navigationTimer.current);
     }
@@ -85,7 +74,7 @@ const AuthScreen = ({
   };
 
   const handleLogin = async (
-    event: SubmitEvent<HTMLFormElement>,
+    event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
@@ -133,7 +122,7 @@ const AuthScreen = ({
   };
 
   const handleSignup = async (
-    event: SubmitEvent<HTMLFormElement>,
+    event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
@@ -198,126 +187,13 @@ const AuthScreen = ({
           </p>
         </div>
 
-        <Form
-          className="space-y-5"
+        <AuthForm
+          mode={mode}
+          loading={loading}
+          errors={errors}
+          onClearError={clearError}
           onSubmit={isLogin ? handleLogin : handleSignup}
-          noValidate
-        >
-          {!isLogin && (
-            <Input
-              id="signup-name"
-              name="fullName"
-              label="Full Name"
-              placeholder="Enter your full name"
-              autoComplete="name"
-              error={errors.fullName}
-              onChange={() => clearError("fullName")}
-              required
-            />
-          )}
-
-          <Input
-            id={isLogin ? "login-email" : "signup-email"}
-            name="email"
-            type="email"
-            label="Email Address"
-            placeholder="name@company.com"
-            autoComplete="email"
-            error={errors.email}
-            onChange={() => clearError("email")}
-            required
-          />
-
-          <Input
-            id={isLogin ? "login-password" : "signup-password"}
-            name="password"
-            type={showPassword ? "text" : "password"}
-            label="Password"
-            placeholder="Enter your password"
-            autoComplete={isLogin ? "current-password" : "new-password"}
-            minLength={6}
-            error={errors.password}
-            onChange={() => {
-              clearError("password");
-              clearError("confirmPassword");
-            }}
-            required
-            rightIcon={
-              <Button unstyled
-                type="button"
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                onClick={() => setShowPassword((current) => !current)}
-                className="rounded-md p-1 text-slate-400 hover:text-primary"
-              >
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </Button>
-            }
-          />
-
-          {!isLogin && (
-            <Input
-              id="signup-confirm-password"
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              label="Confirm Password"
-              placeholder="Re-enter your password"
-              autoComplete="new-password"
-              minLength={6}
-              error={errors.confirmPassword}
-              onChange={() => clearError("confirmPassword")}
-              required
-              rightIcon={
-                <Button unstyled
-                  type="button"
-                  tabIndex={-1}
-                  aria-label={
-                    showConfirmPassword
-                      ? "Hide confirm password"
-                      : "Show confirm password"
-                  }
-                  onClick={() => setShowConfirmPassword((current) => !current)}
-                  className="rounded-md p-1 text-slate-400 hover:text-primary"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={17} />
-                  ) : (
-                    <Eye size={17} />
-                  )}
-                </Button>
-              }
-            />
-          )}
-
-          {isLogin && (
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex cursor-pointer items-center gap-2 text-slate-600">
-                <Checkbox
-                  unstyled
-                  name="rememberMe"
-                  className="h-4 w-4 rounded accent-[var(--primary)]"
-                />
-                Remember me
-              </label>
-
-              <Button unstyled
-                type="button"
-                className="font-medium text-primary hover:underline"
-              >
-                Forgot password?
-              </Button>
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            fullWidth
-            loading={loading}
-            leftIcon={isLogin ? <LogIn size={17} /> : <UserPlus size={17} />}
-          >
-            {isLogin ? "Login" : "Create Account"}
-          </Button>
-        </Form>
+        />
 
         <div className="mt-7 flex items-center justify-center gap-1.5 text-sm text-slate-500">
           <span>

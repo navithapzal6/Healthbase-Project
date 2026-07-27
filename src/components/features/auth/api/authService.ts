@@ -4,7 +4,7 @@ import type {
   AuthApiResponse,
   LoginRequest,
   SignupRequest,
-} from "./types";
+} from "../types";
 
 const AUTH_BASE_PATH = "/api/v1/auth";
 

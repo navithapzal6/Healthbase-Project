@@ -3,8 +3,10 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 import {
+  ConfirmationDialog,
   startNavigationLoading,
   toast,
 } from "@/src/components/ui";
@@ -41,6 +43,7 @@ const toHeaderUser = (): HeaderUserType => {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<HeaderUserType>(() => toHeaderUser());
+  const [logoutConfirmationOpen, setLogoutConfirmationOpen] = useState(false);
   const pathname = usePathname() || "/dashboard";
   const headerConfig = getHeaderRouteConfig(pathname);
 
@@ -58,6 +61,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const handleLogout = () => {
     const userEmail = getAuthUser()?.email;
+    setLogoutConfirmationOpen(false);
 
     authLogger.info("Logout completed", { userEmail });
 
@@ -96,7 +100,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       >
         {/* Header */}
         <div className="sticky top-0 z-40">
-          <Header {...headerConfig} user={user} onLogout={handleLogout} />
+          <Header
+            {...headerConfig}
+            user={user}
+            onLogout={() => setLogoutConfirmationOpen(true)}
+          />
         </div>
 
         {/* Scrollable Content */}
@@ -106,6 +114,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </div>
         </main>
       </div>
+
+      <ConfirmationDialog
+        open={logoutConfirmationOpen}
+        title="Logout from Stonebuild?"
+        description="Your current session will end and you will return to the login page."
+        confirmText="Logout"
+        variant="primary"
+        icon={<LogOut size={24} />}
+        onConfirm={handleLogout}
+        onCancel={() => setLogoutConfirmationOpen(false)}
+      />
     </div>
   );
 };

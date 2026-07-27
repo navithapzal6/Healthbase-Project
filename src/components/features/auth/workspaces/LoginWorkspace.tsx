@@ -1,4 +1,4 @@
-import { AuthScreen } from "@/src/components/page/auth";
+import AuthScreen from "../components/AuthScreen";
 
 const LoginWorkspace = () => <AuthScreen initialMode="login" />;
 

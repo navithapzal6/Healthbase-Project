@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import { AuthGuard } from "../auth";
+import { AuthGuard } from "@/src/components/features/auth";
 import AppLayout from "./AppLayout";
 
 interface AppShellProps {

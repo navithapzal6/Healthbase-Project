@@ -50,3 +50,43 @@ export const matchesField = <TValues extends object>(
   message: string,
 ): ValidationRule<TValues> =>
   (value, values) => (value === values[field] ? undefined : message);
+
+export const maxLength = <TValues extends object>(
+  maximum: number,
+  message: string,
+): ValidationRule<TValues> =>
+  (value) => {
+    if (isEmptyValue(value)) return undefined;
+    return String(value).trim().length > maximum ? message : undefined;
+  };
+
+export const pattern = <TValues extends object>(
+  expression: RegExp,
+  message: string,
+): ValidationRule<TValues> =>
+  (value) => {
+    if (isEmptyValue(value)) return undefined;
+    return expression.test(String(value).trim()) ? undefined : message;
+  };
+
+export const validDate = <TValues extends object>(
+  message: string,
+): ValidationRule<TValues> =>
+  (value) => {
+    if (isEmptyValue(value)) return undefined;
+    const date = new Date(`${String(value)}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? message : undefined;
+  };
+
+export const dateNotAfterToday = <TValues extends object>(
+  message: string,
+): ValidationRule<TValues> =>
+  (value) => {
+    if (isEmptyValue(value)) return undefined;
+
+    const date = new Date(`${String(value)}T00:00:00`);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    return Number.isNaN(date.getTime()) || date > today ? message : undefined;
+  };

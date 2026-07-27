@@ -7,5 +7,4 @@ export * from "./user-log";
 export * from "./purchase";
 export * from "./out-patient";
 export * from "./settings";
-export * from "./login";
-export * from "./signup";
+export * from "./auth";

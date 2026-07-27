@@ -103,7 +103,6 @@ const SettingsAssignmentModal = ({
   const assignSelected = () => {
     if (!selectedIds.length) return;
     onAssign(selectedIds);
-    setSelectedIds([]);
   };
 
   const SubjectIcon = subjectType === "user" ? UserRound : ListChecks;

@@ -9,6 +9,7 @@ export type ListSortDirection = "asc" | "desc";
 export interface ListSortOption {
   label: string;
   value: string;
+  shortLabel?: string;
 }
 
 export interface ListPageProps {

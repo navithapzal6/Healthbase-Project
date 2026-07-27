@@ -59,20 +59,6 @@ export const menus: SidebarMenuItem[] = [
     label: "Out Patient",
     route: "/out-patient",
     icon: Stethoscope,
-    items: [
-      {
-        label: "Patient",
-        route: "/out-patient?section=patient",
-      },
-      {
-        label: "Consultation",
-        route: "/out-patient?section=consultation",
-      },
-      {
-        label: "Pharmacy",
-        route: "/out-patient?section=pharmacy",
-      },
-    ],
   },
 
   {

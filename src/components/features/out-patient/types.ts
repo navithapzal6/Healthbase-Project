@@ -1,4 +1,16 @@
-export type OutPatientSectionId = "patient" | "consultation" | "pharmacy";
+import type { ComponentType, ReactNode } from "react";
+
+import type {
+  ListSortDirection,
+  ListSortOption,
+} from "@/src/components/page/list";
+
+export type OutPatientSectionId =
+  | "patient"
+  | "consultation"
+  | "prescription";
+
+export type OutPatientViewId = "list" | "entry";
 
 export interface OutPatientSection {
   id: OutPatientSectionId;
@@ -15,4 +27,169 @@ export interface OutPatientSectionNavProps {
 
 export interface OutPatientContentProps {
   section: OutPatientSection;
+}
+
+export interface PatientRecord {
+  id: number;
+  uhid: string;
+  patientName: string;
+  mobileNumber: string;
+  dateOfBirth: string;
+  age: number;
+  gender: string;
+  email: string;
+  address: string;
+  bloodGroup: string;
+  aadhaarNumber: string;
+  maritalStatus: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConsultationRecord {
+  id: number;
+  consultationNumber: string;
+  patientId: number;
+  patientName: string;
+  patientUhid: string;
+  consultationDate: string;
+  illness: string;
+  medicalHistory: string;
+  allergy: string;
+  examinationFindings: string;
+  diagnosis: string;
+  advice: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PrescriptionRecord {
+  id: number;
+  prescriptionNumber: string;
+  patientId: number;
+  patientName: string;
+  patientUhid: string;
+  prescriptionDate: string;
+  medicine: string;
+  strength: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PatientFormValues {
+  patientName: string;
+  mobileNumber: string;
+  dateOfBirth: string;
+  gender: string;
+  email: string;
+  address: string;
+  bloodGroup: string;
+  aadhaarNumber: string;
+  maritalStatus: string;
+}
+
+export interface ConsultationFormValues {
+  patientId: number;
+  consultationDate: string;
+  illness: string;
+  medicalHistory: string;
+  allergy: string;
+  examinationFindings: string;
+  diagnosis: string;
+  advice: string;
+}
+
+export interface PrescriptionFormValues {
+  patientId: number;
+  prescriptionDate: string;
+  medicine: string;
+  strength: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+}
+
+export interface PatientOption {
+  value: string;
+  label: string;
+  description?: string;
+}
+
+export interface ListRecordsParams {
+  page: number;
+  pageSize: number;
+  search: string;
+  sortBy: string;
+  sortDirection: ListSortDirection;
+}
+
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface PaginatedResult<TRecord> {
+  items: TRecord[];
+  pagination: PaginationMeta;
+}
+
+export interface ApiEnvelope<TData> {
+  success: boolean;
+  message: string;
+  data: TData;
+}
+
+export interface OutPatientColumn<TRecord> {
+  id: string;
+  label: string;
+  width?: string;
+  align?: "left" | "center" | "right";
+  cellClassName?: string;
+  render: (record: TRecord) => ReactNode;
+}
+
+export interface OutPatientModuleConfig {
+  id: OutPatientSectionId;
+  singular: string;
+  plural: string;
+  listTitle: string;
+  createTitle: string;
+  searchPlaceholder: string;
+  sortOptions: ListSortOption[];
+  defaultSort: string;
+  defaultSortDirection: ListSortDirection;
+  tableMinWidth: number;
+  needsPatientOptions?: boolean;
+}
+
+export interface OutPatientEntryFormProps<TValues extends object> {
+  initialValues?: TValues;
+  patientOptions?: PatientOption[];
+  saving?: boolean;
+  submitLabel?: string;
+  onSubmit: (values: TValues) => void;
+}
+
+export interface OutPatientModuleProps<
+  TRecord extends { id: number },
+  TValues extends object,
+> {
+  config: OutPatientModuleConfig;
+  columns: OutPatientColumn<TRecord>[];
+  EntryForm: ComponentType<OutPatientEntryFormProps<TValues>>;
+  list: (params: ListRecordsParams) => Promise<PaginatedResult<TRecord>>;
+  create: (values: TValues) => Promise<TRecord>;
+  update: (id: number, values: TValues) => Promise<TRecord>;
+  remove: (ids: number[]) => Promise<number>;
+  toFormValues: (record: TRecord) => TValues;
 }

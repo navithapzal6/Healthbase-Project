@@ -8,6 +8,7 @@ export {
   TableHeader,
   TableRow,
 } from "./Table";
+export { default as TableSkeletonRows } from "./TableSkeletonRows";
 
 export type {
   TableCellProps,

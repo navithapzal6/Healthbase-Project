@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 
 import { Button, Input } from "@/src/components/ui";
+import { cn } from "@/src/lib/utils";
 
 import type { ListSortDirection, ListSortOption } from "./types";
 
@@ -13,6 +14,8 @@ interface ListSortMenuProps {
   direction: ListSortDirection;
   onChange?: (value: string, direction: ListSortDirection) => void;
   compact?: boolean;
+  className?: string;
+  triggerClassName?: string;
 }
 
 const ListSortMenu = ({
@@ -21,6 +24,8 @@ const ListSortMenu = ({
   direction,
   onChange,
   compact = false,
+  className,
+  triggerClassName,
 }: ListSortMenuProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -59,15 +64,23 @@ const ListSortMenu = ({
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={cn("relative", className)}>
       <Button unstyled
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className={`inline-flex items-center rounded-xl border border-border bg-white font-medium shadow-sm transition-all duration-200 hover:border-primary/30 ${compact ? "h-8 gap-1.5 px-3 text-xs" : "h-9 gap-2 px-4 text-sm"}`}
+        className={cn(
+          "inline-flex items-center rounded-xl border border-border bg-white font-medium shadow-sm transition-all duration-200 hover:border-primary/30",
+          compact
+            ? "h-8 gap-1.5 px-3 text-xs"
+            : "h-9 gap-2 px-4 text-sm",
+          triggerClassName,
+        )}
       >
         {!compact && <span className="text-slate-500">Sort By :</span>}
-        <span>{selectedOption?.label ?? "Select"}</span>
+        <span className="min-w-0 truncate">
+          {selectedOption?.shortLabel ?? selectedOption?.label ?? "Select"}
+        </span>
         <ChevronDown
           size={16}
           className={`transition-transform ${open ? "rotate-180" : ""}`}

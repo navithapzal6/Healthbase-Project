@@ -2,7 +2,7 @@
 
 import { Boxes } from "lucide-react";
 
-import type { AuthShellProps } from "./types";
+import type { AuthShellProps } from "../types";
 
 const AuthShell = ({
   mode,

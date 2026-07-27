@@ -14,14 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui";
+import { formatAppDate } from "@/src/core/date";
 import type { TransactionTableProps } from "./types";
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
 
 const formatAmount = (value: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -127,7 +121,7 @@ const TransactionTable = ({
                   {record.category}
                 </TableCell>
                 <TableCell className="text-slate-600">
-                  {formatDate(record.date)}
+                  {formatAppDate(record.date, record.date)}
                 </TableCell>
                 <TableCell>
                   <span className="rounded-full bg-primary/8 px-2 py-1 font-medium text-primary">

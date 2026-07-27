@@ -1,4 +1,5 @@
 import type { PaymentContact, PaymentMode, PaymentRecord } from "./types";
+import { formatAppDate } from "@/src/core/date";
 
 export const paymentContacts: PaymentContact[] = [
   { id: "c-001", name: "Dr. Aravind Kumar", reference: "Consultant · Cardiology" },
@@ -32,10 +33,10 @@ const descriptions = [
   "Patient account refund", "Consumables purchase settlement",
 ];
 
-const isoDate = (offset: number) => {
+const appDate = (offset: number) => {
   const date = new Date();
   date.setDate(date.getDate() - offset);
-  return date.toISOString().slice(0, 10);
+  return formatAppDate(date);
 };
 
 export const initialPaymentRecords: PaymentRecord[] = Array.from({ length: 50 }, (_, index) => {
@@ -43,7 +44,7 @@ export const initialPaymentRecords: PaymentRecord[] = Array.from({ length: 50 },
   const category = paymentCategories[(index * 5 + contact.id.length) % paymentCategories.length];
   return {
     id: `PAY-${String(index + 1).padStart(4, "0")}`,
-    date: isoDate(index % 45),
+    date: appDate(index % 45),
     contactId: contact.id,
     contactName: contact.name,
     category,

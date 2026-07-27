@@ -1,6 +1,7 @@
 import {
   positiveNumber,
   required,
+  validDate,
   validate,
   validationMessages,
   type ValidationSchema,
@@ -23,7 +24,10 @@ const normalizeTransactionValues = (
 const createTransactionSchema = (
   singular: string,
 ): ValidationSchema<TransactionFormValues> => ({
-  date: [required(`${singular} date is required`)],
+  date: [
+    required(`${singular} date is required`),
+    validDate(`Enter ${singular.toLowerCase()} date in DD/MM/YYYY format`),
+  ],
   contactId: [required("Select a contact")],
   category: [required("Select a category")],
   paymentMode: [required("Select a payment mode")],

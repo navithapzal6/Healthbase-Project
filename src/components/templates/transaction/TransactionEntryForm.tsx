@@ -12,6 +12,7 @@ import {
   Textarea,
   Typeahead,
 } from "@/src/components/ui";
+import { todayAppDate } from "@/src/core/date";
 import { clearFieldError } from "@/src/core/forms";
 import type { ValidationErrors } from "@/src/core/validation";
 
@@ -21,10 +22,8 @@ import type {
 } from "./types";
 import { validateTransactionForm } from "./validation";
 
-const today = () => new Date().toISOString().slice(0, 10);
-
 const emptyValues = (contactId = ""): TransactionFormValues => ({
-  date: today(),
+  date: todayAppDate(),
   contactId,
   category: "",
   paymentMode: "",

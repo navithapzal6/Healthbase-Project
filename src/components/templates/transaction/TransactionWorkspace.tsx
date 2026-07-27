@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button, ConfirmationDialog, Input, Select, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
+import { parseAppDate } from "@/src/core/date";
 import {
   ListBulkActions,
   ListSortMenu,
@@ -157,6 +158,9 @@ const TransactionWorkspace = ({
       const result =
         historySortValue === "amount"
           ? first.amount - second.amount
+          : historySortValue === "date"
+            ? (parseAppDate(first.date)?.getTime() ?? 0) -
+              (parseAppDate(second.date)?.getTime() ?? 0)
           : String(
               first[historySortValue as keyof TransactionRecord],
             ).localeCompare(

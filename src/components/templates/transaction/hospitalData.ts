@@ -3,6 +3,7 @@ import type {
   TransactionPaymentMode,
   TransactionRecord,
 } from "./types";
+import { formatAppDate } from "@/src/core/date";
 
 export const hospitalTransactionContacts: TransactionContact[] = [
   { id: "c-001", name: "Dr. Aravind Kumar", reference: "Consultant · Cardiology" },
@@ -30,10 +31,10 @@ export const hospitalPaymentModes: TransactionPaymentMode[] = [
   "Card",
 ];
 
-const isoDate = (offset: number) => {
+const appDate = (offset: number) => {
   const date = new Date();
   date.setDate(date.getDate() - offset);
-  return date.toISOString().slice(0, 10);
+  return formatAppDate(date);
 };
 
 interface CreateHospitalRecordsOptions {
@@ -55,7 +56,7 @@ export const createHospitalTransactionRecords = ({
 
     return {
       id: `${prefix}-${String(index + 1).padStart(4, "0")}`,
-      date: isoDate(index % 45),
+      date: appDate(index % 45),
       contactId: contact.id,
       contactName: contact.name,
       category: categories[(index * 3) % categories.length],

@@ -1,3 +1,4 @@
+import { isAppDate, parseAppDate } from "@/src/core/date";
 import type { ValidationRule } from "./types";
 
 const isEmptyValue = (value: unknown) => {
@@ -74,8 +75,7 @@ export const validDate = <TValues extends object>(
 ): ValidationRule<TValues> =>
   (value) => {
     if (isEmptyValue(value)) return undefined;
-    const date = new Date(`${String(value)}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? message : undefined;
+    return isAppDate(String(value)) ? undefined : message;
   };
 
 export const dateNotAfterToday = <TValues extends object>(
@@ -84,9 +84,9 @@ export const dateNotAfterToday = <TValues extends object>(
   (value) => {
     if (isEmptyValue(value)) return undefined;
 
-    const date = new Date(`${String(value)}T00:00:00`);
+    const date = parseAppDate(String(value));
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    return Number.isNaN(date.getTime()) || date > today ? message : undefined;
+    return !date || date > today ? message : undefined;
   };

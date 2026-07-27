@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui";
+import { formatAppDate } from "@/src/core/date";
 
 import type { UserLogRecord } from "./types";
 
@@ -26,13 +27,6 @@ interface UserLogTableProps {
   onEdit: (record: UserLogRecord) => void;
   onDelete: (recordIds: string[]) => void;
 }
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
 
 const UserLogTable = ({
   records,
@@ -114,7 +108,7 @@ const UserLogTable = ({
                   {(page - 1) * pageSize + index + 1}
                 </TableCell>
                 <TableCell>
-                  {formatDate(record.date)}
+                  {formatAppDate(record.date, record.date)}
                 </TableCell>
                 <TableCell
                   className="font-medium text-slate-800"

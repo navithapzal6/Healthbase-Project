@@ -112,16 +112,16 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         }`}
       >
         <Image
-          src="/stonebuild-logo.png"
-          alt="Stonebuild"
-          width={42}
-          height={42}
+          src="/healthbase-logo.png"
+          alt="Healthbase"
+          width={30}
+          height={30}
           className="shrink-0"
         />
 
         {!collapsed && (
           <h1 className="truncate text-xl font-bold text-[#103BB5]">
-            Stonebuild
+            Healthbase
           </h1>
         )}
       </div>

@@ -1,3 +1,8 @@
+import {
+  formatAppDate,
+  parseAppDate,
+  todayAppDate,
+} from "@/src/core/date";
 import type {
   ConsultationFormValues,
   ConsultationRecord,
@@ -7,7 +12,7 @@ import type {
   PrescriptionRecord,
 } from "./types";
 
-export const todayDate = () => new Date().toISOString().slice(0, 10);
+export const todayDate = todayAppDate;
 
 export const calculateAge = (
   dateOfBirth: string,
@@ -15,8 +20,8 @@ export const calculateAge = (
 ) => {
   if (!dateOfBirth) return "";
 
-  const birthDate = new Date(`${dateOfBirth}T00:00:00`);
-  if (Number.isNaN(birthDate.getTime()) || birthDate > referenceDate) {
+  const birthDate = parseAppDate(dateOfBirth);
+  if (!birthDate || birthDate > referenceDate) {
     return "";
   }
 
@@ -36,15 +41,7 @@ export const calculateAge = (
 
 export const formatDisplayDate = (value: string) => {
   if (!value) return "—";
-
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return formatAppDate(value, value);
 };
 
 export const maskAadhaar = (value: string) =>

@@ -2,6 +2,7 @@
 
 import {
   ListCheckbox,
+  ListLoadSentinel,
   ListRowActions,
 } from "@/src/components/page/list";
 import {
@@ -13,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSkeletonRows,
 } from "@/src/components/ui";
 import { formatAppDate } from "@/src/core/date";
 
@@ -23,9 +25,13 @@ interface UserLogTableProps {
   page: number;
   pageSize: number;
   selectedIds: string[];
+  loading?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
   onSelectionChange: (selectedIds: string[]) => void;
   onEdit: (record: UserLogRecord) => void;
   onDelete: (recordIds: string[]) => void;
+  onLoadMore?: () => void | Promise<void>;
 }
 
 const UserLogTable = ({
@@ -33,9 +39,13 @@ const UserLogTable = ({
   page,
   pageSize,
   selectedIds,
+  loading = false,
+  loadingMore = false,
+  hasMore = false,
   onSelectionChange,
   onEdit,
   onDelete,
+  onLoadMore,
 }: UserLogTableProps) => {
   const pageIds = records.map((record) => record.id);
   const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
@@ -84,7 +94,14 @@ const UserLogTable = ({
         </TableHeader>
 
         <TableBody>
-          {records.map((record, index) => {
+          {loading ? (
+            <TableSkeletonRows
+              rows={10}
+              columns={5}
+              hasSelection
+              hasActions
+            />
+          ) : records.map((record, index) => {
             const selected = selectedIds.includes(record.id);
 
             return (
@@ -145,8 +162,16 @@ const UserLogTable = ({
         </TableBody>
       </Table>
 
-      {!records.length && (
+      {!loading && !records.length && (
         <TableEmptyState title="No user log records found." />
+      )}
+
+      {!loading && onLoadMore && (
+        <ListLoadSentinel
+          hasMore={hasMore}
+          loading={loadingMore}
+          onLoadMore={onLoadMore}
+        />
       )}
     </TableContainer>
   );

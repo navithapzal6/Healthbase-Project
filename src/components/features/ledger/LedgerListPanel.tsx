@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ListBulkActions,
   ListCheckbox,
+  ListLoadSentinel,
   ListRowActions,
   ListSortMenu,
   ListTable,
@@ -21,7 +22,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSkeletonRows,
 } from "@/src/components/ui";
+import {
+  createArrayListSource,
+  useChunkedList,
+} from "@/src/core/query";
 
 import type { LedgerListPanelProps, LedgerRecord } from "./types";
 
@@ -41,12 +47,47 @@ const LedgerListPanel = ({
   const [sortDirection, setSortDirection] =
     useState<ListSortDirection>("asc");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+
+  const sourceVersion = useMemo(
+    () =>
+      records
+        .map(
+          (record) =>
+            `${record.id}:${record.name}:${record.description}:${record.createdAt}`,
+        )
+        .join("|"),
+    [records],
+  );
+
+  const fetchChunk = useMemo(
+    () =>
+      createArrayListSource<LedgerRecord, Record<string, never>>({
+        items: records,
+        searchableText: (record) =>
+          `${record.name} ${record.description}`,
+        compare: (first, second, field) =>
+          String(first[field as keyof LedgerRecord]).localeCompare(
+            String(second[field as keyof LedgerRecord]),
+          ),
+        delayMs: 150,
+      }),
+    [records],
+  );
+
+  const listState = useChunkedList<LedgerRecord>({
+    cacheKey: `ledger:${section.id}`,
+    fetchChunk,
+    search,
+    sortBy: sortValue,
+    sortDirection,
+    chunkSize: 10,
+    initialPageSize: 10,
+    sourceVersion,
+  });
 
   useEffect(() => {
     setSelectedIds([]);
-    setPage(1);
+    listState.setPage(1);
     setSearch("");
   }, [section.id]);
 
@@ -55,29 +96,8 @@ const LedgerListPanel = ({
     setSelectedIds((current) => current.filter((id) => recordIds.has(id)));
   }, [records]);
 
-  const visibleRecords = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const filtered = records.filter(
-      (record) =>
-        !query ||
-        record.name.toLowerCase().includes(query) ||
-        record.description.toLowerCase().includes(query),
-    );
-
-    return [...filtered].sort((first, second) => {
-      const firstValue = first[sortValue as keyof LedgerRecord];
-      const secondValue = second[sortValue as keyof LedgerRecord];
-      const result = firstValue.localeCompare(secondValue);
-      return sortDirection === "asc" ? result : -result;
-    });
-  }, [records, search, sortDirection, sortValue]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleRecords.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageRecords = visibleRecords.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const currentPage = listState.page;
+  const pageRecords = listState.items;
   const pageIds = pageRecords.map((record) => record.id);
   const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
   const allOnPageSelected =
@@ -125,7 +145,7 @@ const LedgerListPanel = ({
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
-                setPage(1);
+                listState.setPage(1);
               }}
               placeholder="Search ledgers..."
               leftIcon={<Search size={15} className="text-slate-400" />}
@@ -142,6 +162,7 @@ const LedgerListPanel = ({
             onChange={(value, direction) => {
               setSortValue(value);
               setSortDirection(direction);
+              listState.setPage(1);
             }}
           />
         </div>
@@ -180,7 +201,14 @@ const LedgerListPanel = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRecords.map((record) => {
+            {listState.loading ? (
+              <TableSkeletonRows
+                rows={10}
+                columns={2}
+                hasSelection
+                hasActions
+              />
+            ) : pageRecords.map((record) => {
               const selected = selectedIds.includes(record.id);
 
               return (
@@ -223,25 +251,31 @@ const LedgerListPanel = ({
           </TableBody>
         </Table>
 
-        {pageRecords.length === 0 && (
+        {!listState.loading && pageRecords.length === 0 && (
           <TableEmptyState
             title="No ledger records found"
             description="Try another search or create a new entry."
+          />
+        )}
+
+        {!listState.loading && (
+          <ListLoadSentinel
+            hasMore={listState.hasMoreInPage}
+            loading={listState.loadingMore}
+            onLoadMore={listState.loadMore}
           />
         )}
       </ListTable>
 
       <Pagination
         page={currentPage}
-        pageSize={pageSize}
-        totalItems={visibleRecords.length}
-        pageSizeOptions={[10, 25, 50]}
+        pageSize={listState.pageSize}
+        totalItems={listState.totalItems}
+        loadedItems={pageRecords.length}
+        pageSizeOptions={[10, 20, 50]}
         compact
-        onPageChange={setPage}
-        onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
-        }}
+        onPageChange={listState.setPage}
+        onPageSizeChange={listState.setPageSize}
       />
     </section>
   );

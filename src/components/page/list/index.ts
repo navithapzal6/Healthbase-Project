@@ -9,5 +9,6 @@ export { default as ListSortMenu } from "./ListSortMenu";
 export { default as ListCheckbox } from "./ListCheckbox";
 export { default as ListRowActions } from "./ListRowActions";
 export { default as ListBulkActions } from "./ListBulkActions";
+export { default as ListLoadSentinel } from "./ListLoadSentinel";
 
 export * from "./types";

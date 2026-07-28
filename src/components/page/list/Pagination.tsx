@@ -10,7 +10,8 @@ const Pagination = ({
   page = 1,
   pageSize = 10,
   totalItems = 0,
-  pageSizeOptions = [10, 25, 50],
+  loadedItems,
+  pageSizeOptions = [10, 20, 50],
   compact = false,
   onPageChange,
   onPageSizeChange,
@@ -18,7 +19,10 @@ const Pagination = ({
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = Math.min(Math.max(page, 1), totalPages);
   const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const end = Math.min(currentPage * pageSize, totalItems);
+  const end =
+    loadedItems === undefined
+      ? Math.min(currentPage * pageSize, totalItems)
+      : Math.min(start + Math.max(0, loadedItems) - 1, totalItems);
 
   return (
     <div className={`mt-3 flex shrink-0 items-center justify-between ${compact ? "gap-2" : "flex-col gap-3 sm:flex-row"}`}>

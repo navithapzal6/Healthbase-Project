@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
+import type { ListChunkFetcher } from "@/src/core/query";
 
 export type TransactionPaymentMode =
   | "Cash"
@@ -39,6 +40,11 @@ export interface TransactionFormValues {
   amount: string;
 }
 
+export interface TransactionListFilters {
+  paymentMode?: string;
+  contactId?: string;
+}
+
 export interface TransactionConfig {
   singular: string;
   plural: string;
@@ -53,9 +59,13 @@ export interface TransactionConfig {
 }
 
 export interface TransactionService {
-  list: () => Promise<TransactionRecord[]>;
-  listByContact: (contactId: string) => Promise<TransactionRecord[]>;
+  listChunk: ListChunkFetcher<TransactionRecord, TransactionListFilters>;
+  listByContactChunk: ListChunkFetcher<
+    TransactionRecord,
+    TransactionListFilters
+  >;
   create: (payload: NewTransactionPayload) => Promise<TransactionRecord>;
+  remove: (recordIds: string[]) => Promise<number>;
 }
 
 export interface TransactionEntryFormProps {
@@ -78,9 +88,13 @@ export interface TransactionTableProps {
   records: TransactionRecord[];
   selectedIds?: string[];
   hideContact?: boolean;
+  loading?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
   onSelectionChange?: (ids: string[]) => void;
   onEdit?: (record: TransactionRecord) => void;
   onDelete?: (recordIds: string[]) => void;
+  onLoadMore?: () => void | Promise<void>;
 }
 
 export type TransactionEntryFormComponent =

@@ -1,7 +1,7 @@
 "use client";
 
 import { Filter, History, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   ListBulkActions,
@@ -13,10 +13,10 @@ import {
 } from "@/src/components/page/list";
 import { Button, ConfirmationDialog, Input, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
+import { useChunkedList } from "@/src/core/query";
 
 import UserLogFilterFields from "./UserLogFilterFields";
 import UserLogTable from "./UserLogTable";
-import { userLogRecords } from "./data";
 import { userLogService } from "./service";
 import type { UserLogFilters, UserLogRecord } from "./types";
 
@@ -35,9 +35,6 @@ const sortOptions: ListSortOption[] = [
 ];
 
 const UserLogWorkspace = () => {
-  const [records, setRecords] = useState<UserLogRecord[]>(() => [
-    ...userLogRecords,
-  ]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [draftFilters, setDraftFilters] =
     useState<UserLogFilters>(emptyFilters);
@@ -49,73 +46,40 @@ const UserLogWorkspace = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  useEffect(() => {
-    let active = true;
-
-    userLogService
-      .list()
-      .then((data) => {
-        if (active) setRecords(data);
-      })
-      .catch((error) => {
-        userLogLogger.error("Unable to load user logs", error);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const listState = useChunkedList<UserLogRecord, UserLogFilters>({
+    cacheKey: "user-log:list",
+    fetchChunk: userLogService.listChunk,
+    search: appliedFilters.search,
+    sortBy: sortValue,
+    sortDirection,
+    filters: {
+      search: "",
+      userId: appliedFilters.userId,
+    },
+    chunkSize: 10,
+    initialPageSize: 10,
+    cachePolicy: "memory",
+  });
+  const records = listState.items;
 
   useEffect(() => {
     const recordIds = new Set(records.map((record) => record.id));
     setSelectedIds((current) => current.filter((id) => recordIds.has(id)));
   }, [records]);
 
-  const visibleRecords = useMemo(() => {
-    const search = appliedFilters.search.trim().toLowerCase();
-    const filtered = records.filter((record) => {
-      const matchesSearch =
-        !search ||
-        record.user.toLowerCase().includes(search) ||
-        record.date.toLowerCase().includes(search) ||
-        record.logIn.toLowerCase().includes(search) ||
-        record.logOut.toLowerCase().includes(search);
-      const matchesUser =
-        !appliedFilters.userId || record.userId === appliedFilters.userId;
-
-      return matchesSearch && matchesUser;
-    });
-
-    return [...filtered].sort((first, second) => {
-      const firstValue = String(
-        first[sortValue as keyof UserLogRecord],
-      ).toLowerCase();
-      const secondValue = String(
-        second[sortValue as keyof UserLogRecord],
-      ).toLowerCase();
-      const result = firstValue.localeCompare(secondValue);
-
-      return sortDirection === "asc" ? result : -result;
-    });
-  }, [appliedFilters, records, sortDirection, sortValue]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleRecords.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageRecords = visibleRecords.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
   const filterCount = appliedFilters.userId ? 1 : 0;
   const selectedRecord = records.find((record) =>
     selectedIds.includes(record.id),
   );
 
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+    if (!listState.error) return;
+    userLogLogger.error("Unable to load user logs", listState.error);
+    toast.error({
+      title: "Unable to load user logs",
+      description: listState.error,
+    });
+  }, [listState.error]);
 
   const editUserLog = (record: UserLogRecord) => {
     userLogLogger.debug("User log selected for edit", { id: record.id });
@@ -128,36 +92,41 @@ const UserLogWorkspace = () => {
   const deleteUserLogs = async () => {
     if (!pendingDeleteIds.length) return;
     setDeleting(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      const removed = await userLogService.remove(pendingDeleteIds);
+      setSelectedIds((current) =>
+        current.filter((id) => !pendingDeleteIds.includes(id)),
+      );
+      listState.clearCache();
 
-    setRecords((current) =>
-      current.filter((record) => !pendingDeleteIds.includes(record.id)),
-    );
-    setSelectedIds((current) =>
-      current.filter((id) => !pendingDeleteIds.includes(id)),
-    );
+      userLogLogger.info("User log records deleted", {
+        count: removed,
+        ids: pendingDeleteIds,
+      });
 
-    userLogLogger.info("User log records deleted", {
-      count: pendingDeleteIds.length,
-      ids: pendingDeleteIds,
-    });
-
-    toast.success({
-      title: "User log deleted",
-      description: `${pendingDeleteIds.length} ${
-        pendingDeleteIds.length === 1 ? "record" : "records"
-      } removed.`,
-    });
-
-    setPendingDeleteIds([]);
-    setDeleting(false);
+      toast.success({
+        title: "User log deleted",
+        description: `${removed} ${
+          removed === 1 ? "record" : "records"
+        } removed.`,
+      });
+      setPendingDeleteIds([]);
+    } catch (error) {
+      userLogLogger.error("Unable to delete user log records", error);
+      toast.error({
+        title: "Delete failed",
+        description: "Unable to delete the selected user log records.",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const updateSearch = (value: string) => {
     setDraftFilters((current) => ({ ...current, search: value }));
     setAppliedFilters((current) => ({ ...current, search: value }));
     setSelectedIds([]);
-    setPage(1);
+    listState.setPage(1);
   };
 
   return (
@@ -174,7 +143,7 @@ const UserLogWorkspace = () => {
               </h2>
             </div>
             <p className="ml-11 mt-0.5 text-xs text-slate-500">
-              {visibleRecords.length} of {records.length} user log records
+              {records.length} of {listState.totalItems} user log records
             </p>
           </div>
 
@@ -224,7 +193,7 @@ const UserLogWorkspace = () => {
                 setSortValue(value);
                 setSortDirection(direction);
                 setSelectedIds([]);
-                setPage(1);
+                listState.setPage(1);
               }}
             />
           </div>
@@ -245,29 +214,33 @@ const UserLogWorkspace = () => {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="min-h-0 flex-1">
               <UserLogTable
-                records={pageRecords}
-                page={currentPage}
-                pageSize={pageSize}
+                records={records}
+                page={listState.page}
+                pageSize={listState.pageSize}
                 selectedIds={selectedIds}
+                loading={listState.loading}
+                loadingMore={listState.loadingMore}
+                hasMore={listState.hasMoreInPage}
                 onSelectionChange={setSelectedIds}
                 onEdit={editUserLog}
                 onDelete={setPendingDeleteIds}
+                onLoadMore={listState.loadMore}
               />
             </div>
 
             <div className="shrink-0 pt-3">
               <Pagination
-                page={currentPage}
-                pageSize={pageSize}
-                totalItems={visibleRecords.length}
+                page={listState.page}
+                pageSize={listState.pageSize}
+                totalItems={listState.totalItems}
+                loadedItems={records.length}
                 pageSizeOptions={[10, 20, 50]}
                 onPageChange={(nextPage) => {
-                  setPage(nextPage);
+                  listState.setPage(nextPage);
                   setSelectedIds([]);
                 }}
                 onPageSizeChange={(nextPageSize) => {
-                  setPageSize(nextPageSize);
-                  setPage(1);
+                  listState.setPageSize(nextPageSize);
                   setSelectedIds([]);
                 }}
               />
@@ -283,14 +256,14 @@ const UserLogWorkspace = () => {
                 userId: draftFilters.userId,
               }));
               setSelectedIds([]);
-              setPage(1);
+              listState.setPage(1);
               setFilterOpen(false);
             }}
             onReset={() => {
               setDraftFilters((current) => ({ ...current, userId: "" }));
               setAppliedFilters((current) => ({ ...current, userId: "" }));
               setSelectedIds([]);
-              setPage(1);
+              listState.setPage(1);
             }}
           >
             <UserLogFilterFields

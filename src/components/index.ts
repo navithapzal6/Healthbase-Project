@@ -1,6 +1,7 @@
 export * from "./ui";
 
 export * from "./layout";
+export * from "./security";
 
 export { default as AppLayout } from "./layout/AppLayout";
 export { default as AppShell } from "./layout/AppShell";

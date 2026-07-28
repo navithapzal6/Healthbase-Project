@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import {
   DatePicker,
   Form,
@@ -9,8 +7,7 @@ import {
   Textarea,
   Typeahead,
 } from "@/src/components/ui";
-import { clearFieldError } from "@/src/core/forms";
-import type { ValidationErrors } from "@/src/core/validation";
+import { useValidatedForm } from "@/src/core/forms";
 
 import type {
   OutPatientEntryFormProps,
@@ -34,42 +31,23 @@ const emptyValues = (): PrescriptionFormValues => ({
 const PrescriptionForm = ({
   initialValues,
   patientOptions = [],
+  loadPatientOptions,
   saving = false,
   submitLabel = "Save",
   onSubmit,
 }: OutPatientEntryFormProps<PrescriptionFormValues>) => {
-  const [values, setValues] = useState<PrescriptionFormValues>(
-    () => initialValues ?? emptyValues(),
-  );
-  const [errors, setErrors] = useState<
-    ValidationErrors<PrescriptionFormValues>
-  >({});
-
-  useEffect(() => {
-    setValues(initialValues ?? emptyValues());
-    setErrors({});
-  }, [initialValues]);
-
-  const set = <TField extends keyof PrescriptionFormValues>(
-    field: TField,
-    value: PrescriptionFormValues[TField],
-  ) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => clearFieldError(current, field));
-  };
-
-  const clear = () => {
-    setValues(emptyValues());
-    setErrors({});
-  };
-
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const result = validatePrescriptionForm(values);
-    setErrors(result.errors);
-
-    if (result.isValid) onSubmit(result.values);
-  };
+  const {
+    values,
+    errors,
+    setField: set,
+    resetForm: clear,
+    handleSubmit: submit,
+  } = useValidatedForm<PrescriptionFormValues>({
+    createInitialValues: () => initialValues ?? emptyValues(),
+    validate: validatePrescriptionForm,
+    onValidSubmit: onSubmit,
+    resetKey: initialValues,
+  });
 
   return (
     <Form
@@ -86,7 +64,11 @@ const PrescriptionForm = ({
             value={values.patientId ? String(values.patientId) : ""}
             options={patientOptions}
             error={errors.patientId}
+            loadOptions={loadPatientOptions}
+            pageSize={10}
             emptyMessage="No patients found"
+            loadingMessage="Loading patients..."
+            loadingMoreMessage="Loading more patients..."
             onChange={(value) =>
               set("patientId", value ? Number(value) : 0)
             }

@@ -1,9 +1,12 @@
 import { logger } from "@/src/core/logger";
+import { createArrayListSource } from "@/src/core/query";
+import { parseAppDate } from "@/src/core/date";
 
 import type {
   NewTransactionPayload,
   TransactionConfig,
   TransactionContact,
+  TransactionListFilters,
   TransactionRecord,
   TransactionService,
 } from "./types";
@@ -25,7 +28,7 @@ export const createTransactionService = (
 
   const createContactHistory = (contactId: string): TransactionRecord[] => {
     const contact = contacts.find((item) => item.id === contactId);
-    if (!contact) return [];
+    if (!contact || !records.length || !config.categories.length) return [];
 
     return Array.from({ length: historyRecordCount }, (_, index) => {
       const source = records[index % records.length];
@@ -42,33 +45,74 @@ export const createTransactionService = (
   };
 
   return {
-    async list() {
-      await wait(450);
-      serviceLogger.debug("Transaction records loaded", {
-        count: records.length,
+    listChunk(request) {
+      serviceLogger.debug("Transaction chunk requested", {
+        offset: request.offset,
+        limit: request.limit,
       });
-      return [...records];
+
+      return createArrayListSource<
+        TransactionRecord,
+        TransactionListFilters
+      >({
+        items: records,
+        searchableText: (record) =>
+          `${record.contactName} ${record.category} ${record.description} ${record.paymentMode}`,
+        filter: (record, filters) =>
+          !filters.paymentMode ||
+          record.paymentMode === filters.paymentMode,
+        compare: (first, second, sortBy) => {
+          if (sortBy === "amount") return first.amount - second.amount;
+          if (sortBy === "date") {
+            return (
+              (parseAppDate(first.date)?.getTime() ?? 0) -
+              (parseAppDate(second.date)?.getTime() ?? 0)
+            );
+          }
+
+          return String(
+            first[sortBy as keyof TransactionRecord],
+          ).localeCompare(
+            String(second[sortBy as keyof TransactionRecord]),
+          );
+        },
+        delayMs: 350,
+      })(request);
     },
 
-    async listByContact(contactId: string) {
-      await wait(300);
-
+    async listByContactChunk(request) {
+      const contactId = request.filters.contactId ?? "";
       const existing = historyStore.get(contactId);
-      if (existing) {
-        serviceLogger.debug("Contact history loaded from cache", {
-          contactId,
-          count: existing.length,
-        });
-        return [...existing];
+      const history = existing ?? createContactHistory(contactId);
+
+      if (!existing && contactId) {
+        historyStore.set(contactId, history);
       }
 
-      const history = createContactHistory(contactId);
-      historyStore.set(contactId, history);
-      serviceLogger.debug("Contact history generated", {
-        contactId,
-        count: history.length,
-      });
-      return [...history];
+      return createArrayListSource<
+        TransactionRecord,
+        TransactionListFilters
+      >({
+        items: history,
+        searchableText: (record) =>
+          `${record.category} ${record.description} ${record.paymentMode}`,
+        compare: (first, second, sortBy) => {
+          if (sortBy === "amount") return first.amount - second.amount;
+          if (sortBy === "date") {
+            return (
+              (parseAppDate(first.date)?.getTime() ?? 0) -
+              (parseAppDate(second.date)?.getTime() ?? 0)
+            );
+          }
+
+          return String(
+            first[sortBy as keyof TransactionRecord],
+          ).localeCompare(
+            String(second[sortBy as keyof TransactionRecord]),
+          );
+        },
+        delayMs: 250,
+      })(request);
     },
 
     async create(payload: NewTransactionPayload) {
@@ -103,6 +147,27 @@ export const createTransactionService = (
       });
 
       return record;
+    },
+
+    async remove(recordIds: string[]) {
+      await wait(300);
+      const idSet = new Set(recordIds);
+      const before = records.length;
+      records = records.filter((record) => !idSet.has(record.id));
+
+      for (const [contactId, history] of historyStore.entries()) {
+        historyStore.set(
+          contactId,
+          history.filter((record) => !idSet.has(record.id)),
+        );
+      }
+
+      const removed = before - records.length;
+      serviceLogger.info("Transactions removed", {
+        count: removed,
+        recordIds,
+      });
+      return removed;
     },
   };
 };

@@ -10,9 +10,8 @@ import {
   startNavigationLoading,
   toast,
 } from "@/src/components/ui";
-import { clearFieldError } from "@/src/core/forms";
+import { useFormValidation } from "@/src/core/forms";
 import { authLogger, setAuthSession } from "@/src/core/auth";
-import type { ValidationErrors } from "@/src/core/validation";
 import { authService } from "../api/authService";
 
 import AuthShell from "./AuthShell";
@@ -29,7 +28,12 @@ const AuthScreen = ({
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<ValidationErrors<AuthFormValues>>({});
+  const {
+    errors,
+    clearError,
+    clearErrors,
+    validateValues,
+  } = useFormValidation<AuthFormValues>();
   const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -41,15 +45,11 @@ const AuthScreen = ({
     [],
   );
 
-  const clearError = (field: keyof AuthFormValues) => {
-    setErrors((current) => clearFieldError(current, field));
-  };
-
   const switchMode = (nextMode: AuthMode) => {
     if (nextMode === mode) return;
 
     setMode(nextMode);
-    setErrors({});
+    clearErrors();
     if (navigationTimer.current) {
       clearTimeout(navigationTimer.current);
     }
@@ -60,8 +60,10 @@ const AuthScreen = ({
   };
 
   const validateForm = (form: HTMLFormElement, formMode: AuthMode) => {
-    const result = validateAuthForm(formMode, getAuthFormValues(form));
-    setErrors(result.errors);
+    const result = validateValues(
+      getAuthFormValues(form),
+      (values) => validateAuthForm(formMode, values),
+    );
 
     if (!result.isValid) {
       authLogger.warn("Authentication form validation failed", {

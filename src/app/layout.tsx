@@ -3,7 +3,12 @@ import { Inter } from "next/font/google";
 
 import "./globals.css";
 
-import { NavigationLoader, Toaster, AppShell } from "@/src/components";
+import {
+  AppShell,
+  BrowserInteractionGuard,
+  NavigationLoader,
+  Toaster,
+} from "@/src/components";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -11,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Healthbase Software",
+  title: "Stonebuild",
   description: "ERP Application",
 };
 
@@ -29,6 +34,7 @@ export default function RootLayout({
           bg-slate-100
         "
       >
+        <BrowserInteractionGuard />
         <AppShell>{children}</AppShell>
 
         <NavigationLoader />

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ListBulkActions,
   ListCheckbox,
+  ListLoadSentinel,
   ListRowActions,
   ListSortMenu,
   ListTable,
@@ -21,7 +22,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSkeletonRows,
 } from "@/src/components/ui";
+import {
+  createArrayListSource,
+  useChunkedList,
+} from "@/src/core/query";
 
 import type {
   MandatoryMenuOption,
@@ -73,8 +79,6 @@ const SettingsListPanel = ({
   const [sortDirection, setSortDirection] =
     useState<ListSortDirection>("asc");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
   const isUserAccess = section.id === "user-access";
 
@@ -136,45 +140,65 @@ const SettingsListPanel = ({
     userOptions,
   ]);
 
+  const listSource = useMemo(
+    () =>
+      createArrayListSource<SettingsSummaryRecord>({
+        items: summaryRecords,
+        searchableText: (record) =>
+          `${record.label} ${record.assignedCount} ${record.unassignedCount}`,
+        compare: (first, second, sortBy) => {
+          const firstValue =
+            first[sortBy as keyof SettingsSummaryRecord];
+          const secondValue =
+            second[sortBy as keyof SettingsSummaryRecord];
+
+          return typeof firstValue === "number" &&
+            typeof secondValue === "number"
+            ? firstValue - secondValue
+            : String(firstValue).localeCompare(String(secondValue));
+        },
+        delayMs: 250,
+      }),
+    [summaryRecords],
+  );
+  const sourceVersion = useMemo(
+    () =>
+      summaryRecords
+        .map(
+          (record) =>
+            `${record.id}:${record.assignedCount}:${record.unassignedCount}`,
+        )
+        .join("|"),
+    [summaryRecords],
+  );
+  const listState = useChunkedList<SettingsSummaryRecord>({
+    cacheKey: `settings:${section.id}`,
+    fetchChunk: listSource,
+    search,
+    sortBy: sortValue,
+    sortDirection,
+    chunkSize: 10,
+    initialPageSize: 10,
+    cachePolicy: "memory",
+    sourceVersion,
+  });
+
   useEffect(() => {
     setSearch("");
     setSortValue("label");
     setSortDirection("asc");
     setSelectedIds([]);
-    setPage(1);
-  }, [section.id]);
+    listState.setPage(1);
+  }, [listState.setPage, section.id]);
 
   useEffect(() => {
     const recordIds = new Set(summaryRecords.map((record) => record.id));
     setSelectedIds((current) => current.filter((id) => recordIds.has(id)));
   }, [summaryRecords]);
 
-  const visibleRecords = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const filtered = summaryRecords.filter((record) =>
-      [record.label, record.assignedCount, record.unassignedCount].some(
-        (value) => String(value).toLowerCase().includes(query),
-      ),
-    );
-
-    return [...filtered].sort((first, second) => {
-      const firstValue = first[sortValue as keyof SettingsSummaryRecord];
-      const secondValue = second[sortValue as keyof SettingsSummaryRecord];
-      const result =
-        typeof firstValue === "number" && typeof secondValue === "number"
-          ? firstValue - secondValue
-          : String(firstValue).localeCompare(String(secondValue));
-
-      return sortDirection === "asc" ? result : -result;
-    });
-  }, [search, sortDirection, sortValue, summaryRecords]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleRecords.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageRecords = visibleRecords.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const pageRecords = listState.items;
+  const currentPage = listState.page;
+  const pageSize = listState.pageSize;
   const pageIds = pageRecords.map((record) => record.id);
   const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
   const allOnPageSelected =
@@ -185,10 +209,6 @@ const SettingsListPanel = ({
   const selectedSourceRecordIds = summaryRecords
     .filter((record) => selectedIds.includes(record.id))
     .flatMap((record) => record.recordIds);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
 
   const toggleAll = () => {
     setSelectedIds((current) =>
@@ -219,7 +239,7 @@ const SettingsListPanel = ({
         <div>
           <h2 className="text-lg font-bold text-slate-900">{section.label}</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">
-            Manage {visibleRecords.length}{" "}
+            Manage {listState.totalItems}{" "}
             {isUserAccess ? "user access records" : "menu field configurations"}
           </p>
         </div>
@@ -230,7 +250,7 @@ const SettingsListPanel = ({
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
-                setPage(1);
+                listState.setPage(1);
               }}
               placeholder={`Search ${
                 isUserAccess ? "users" : "menus"
@@ -248,7 +268,7 @@ const SettingsListPanel = ({
             onChange={(value, direction) => {
               setSortValue(value);
               setSortDirection(direction);
-              setPage(1);
+              listState.setPage(1);
             }}
           />
         </div>
@@ -297,7 +317,14 @@ const SettingsListPanel = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRecords.map((record, index) => {
+            {listState.loading ? (
+              <TableSkeletonRows
+                rows={10}
+                columns={4}
+                hasSelection
+                hasActions
+              />
+            ) : pageRecords.map((record, index) => {
               const selected = selectedIds.includes(record.id);
 
               return (
@@ -354,9 +381,17 @@ const SettingsListPanel = ({
           </TableBody>
         </Table>
 
-        {pageRecords.length === 0 && (
+        {!listState.loading && pageRecords.length === 0 && (
           <TableEmptyState
             title={`No ${section.label.toLowerCase()} records found.`}
+          />
+        )}
+
+        {!listState.loading && (
+          <ListLoadSentinel
+            hasMore={listState.hasMoreInPage}
+            loading={listState.loadingMore}
+            onLoadMore={listState.loadMore}
           />
         )}
       </ListTable>
@@ -364,13 +399,13 @@ const SettingsListPanel = ({
       <Pagination
         page={currentPage}
         pageSize={pageSize}
-        totalItems={visibleRecords.length}
-        pageSizeOptions={[10, 25, 50]}
+        totalItems={listState.totalItems}
+        loadedItems={pageRecords.length}
+        pageSizeOptions={[10, 20, 50]}
         compact
-        onPageChange={setPage}
+        onPageChange={listState.setPage}
         onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
+          listState.setPageSize(nextPageSize);
         }}
       />
     </section>

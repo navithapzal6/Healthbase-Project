@@ -2,6 +2,7 @@
 
 import {
   ListCheckbox,
+  ListLoadSentinel,
   ListRowActions,
 } from "@/src/components/page/list";
 import {
@@ -13,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSkeletonRows,
 } from "@/src/components/ui";
 import { formatAppDate } from "@/src/core/date";
 import type { TransactionTableProps } from "./types";
@@ -28,9 +30,13 @@ const TransactionTable = ({
   records,
   selectedIds = [],
   hideContact = false,
+  loading = false,
+  loadingMore = false,
+  hasMore = false,
   onSelectionChange,
   onEdit,
   onDelete,
+  onLoadMore,
 }: TransactionTableProps) => {
   const selectable = Boolean(onSelectionChange);
   const showActions = Boolean(onEdit || onDelete);
@@ -87,7 +93,14 @@ const TransactionTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((record) => {
+          {loading ? (
+            <TableSkeletonRows
+              rows={10}
+              columns={hideContact ? 5 : 6}
+              hasSelection={selectable}
+              hasActions={showActions}
+            />
+          ) : records.map((record) => {
             const selected = selectedIds.includes(record.id);
 
             return (
@@ -155,8 +168,16 @@ const TransactionTable = ({
         </TableBody>
       </Table>
 
-      {!records.length && (
+      {!loading && !records.length && (
         <TableEmptyState title="No transaction records found." />
+      )}
+
+      {!loading && onLoadMore && (
+        <ListLoadSentinel
+          hasMore={hasMore}
+          loading={loadingMore}
+          onLoadMore={onLoadMore}
+        />
       )}
     </TableContainer>
   );

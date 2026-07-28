@@ -8,7 +8,6 @@ import type {
   ListRecordsParams,
   PaginatedResult,
   PatientFormValues,
-  PatientOption,
   PatientRecord,
   PrescriptionFormValues,
   PrescriptionRecord,
@@ -26,12 +25,16 @@ const unwrap = <TData>(response: ApiEnvelope<TData>) => response.data;
 
 const listQuery = (params: ListRecordsParams) => {
   const query = new URLSearchParams({
-    page: String(params.page),
-    pageSize: String(params.pageSize),
+    limit: String(params.limit),
     search: params.search,
     sortBy: params.sortBy,
     sortDirection: params.sortDirection,
   });
+
+  if (params.cursor) query.set("cursor", params.cursor);
+  if (params.includeTotal !== undefined) {
+    query.set("includeTotal", String(params.includeTotal));
+  }
 
   return query.toString();
 };
@@ -45,6 +48,7 @@ const list = async <TRecord>(
   >(`${BASE_PATH}/${resource}?${listQuery(params)}`, {
     method: "GET",
     token: token(),
+    signal: params.signal,
   });
 
   return unwrap(response);
@@ -163,19 +167,35 @@ export const outPatientService = {
     return remove("prescriptions", ids);
   },
 
-  async listPatientOptions(): Promise<PatientOption[]> {
+  async loadPatientOptions({
+    query,
+    cursor,
+    limit,
+    signal,
+  }: {
+    query: string;
+    cursor?: string | null;
+    limit: number;
+    signal: AbortSignal;
+  }) {
     const result = await list<PatientRecord>("patients", {
-      page: 1,
-      pageSize: 100,
-      search: "",
+      cursor,
+      limit,
+      includeTotal: false,
+      search: query,
       sortBy: "patientName",
       sortDirection: "asc",
+      signal,
     });
 
-    return result.items.map((patient) => ({
-      value: String(patient.id),
-      label: patient.patientName,
-      description: `${patient.uhid} · ${patient.mobileNumber}`,
-    }));
+    return {
+      options: result.items.map((patient) => ({
+        value: String(patient.id),
+        label: patient.patientName,
+        description: `${patient.uhid} · ${patient.mobileNumber}`,
+      })),
+      nextCursor: result.pagination.nextCursor ?? null,
+      hasMore: result.pagination.hasMore,
+    };
   },
 };

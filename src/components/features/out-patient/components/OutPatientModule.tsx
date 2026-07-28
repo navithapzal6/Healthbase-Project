@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import {
@@ -10,25 +10,16 @@ import {
 } from "@/src/components/page/list";
 import { ConfirmationDialog, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
+import {
+  useChunkedList,
+  type ListChunkFetcher,
+} from "@/src/core/query";
 
-import { outPatientService } from "../api/outPatientService";
 import OutPatientTable from "./OutPatientTable";
 import OutPatientToolbar from "./OutPatientToolbar";
-import type {
-  OutPatientModuleProps,
-  OutPatientViewId,
-  PaginatedResult,
-  PatientOption,
-} from "../types";
+import type { OutPatientModuleProps, OutPatientViewId } from "../types";
 
 const moduleLogger = logger.child("out-patient");
-
-const emptyPagination = {
-  page: 1,
-  pageSize: 10,
-  totalItems: 0,
-  totalPages: 1,
-};
 
 const OutPatientModule = <
   TRecord extends { id: number },
@@ -42,13 +33,10 @@ const OutPatientModule = <
   update,
   remove,
   toFormValues,
+  loadPatientOptions,
+  toPatientOption,
 }: OutPatientModuleProps<TRecord, TValues>) => {
-  const requestNumber = useRef(0);
   const [view, setView] = useState<OutPatientViewId>("list");
-  const [records, setRecords] = useState<TRecord[]>([]);
-  const [pagination, setPagination] = useState(emptyPagination);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sortValue, setSortValue] = useState(config.defaultSort);
@@ -61,12 +49,66 @@ const OutPatientModule = <
     useState<TRecord | null>(null);
   const [pendingSave, setPendingSave] = useState<TValues | null>(null);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
-  const [patientOptions, setPatientOptions] = useState<PatientOption[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [loadError, setLoadError] = useState("");
-  const [reloadVersion, setReloadVersion] = useState(0);
+
+  const fetchChunk = useCallback<ListChunkFetcher<TRecord>>(
+    async ({
+      limit,
+      cursor,
+      includeTotal,
+      search: query,
+      sortBy,
+      sortDirection: direction,
+      signal,
+    }) => {
+      const result = await list({
+        cursor,
+        limit,
+        includeTotal,
+        search: query,
+        sortBy,
+        sortDirection: direction,
+        signal,
+      });
+
+      return {
+        items: result.items,
+        totalItems: result.pagination.totalItems,
+        nextCursor: result.pagination.nextCursor ?? null,
+        hasMore: result.pagination.hasMore,
+      };
+    },
+    [list],
+  );
+
+  const {
+    items: records,
+    page,
+    pageSize,
+    totalItems,
+    loading,
+    loadingMore,
+    hasMoreInPage,
+    error: loadError,
+    setPage,
+    setPageSize,
+    loadMore,
+    clearCache,
+  } = useChunkedList<TRecord>({
+    cacheKey: `out-patient:${config.id}`,
+    fetchChunk,
+    paginationMode: "cursor",
+    search,
+    sortBy: sortValue,
+    sortDirection,
+    chunkSize: 10,
+    searchDebounceMs: 0,
+    initialPageSize: 10,
+    cachePolicy: "session",
+    cacheTtlMs: 5 * 60 * 1000,
+    getItemKey: (record) => record.id,
+  });
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -78,89 +120,11 @@ const OutPatientModule = <
   }, [searchInput]);
 
   useEffect(() => {
-    if (!config.needsPatientOptions) return;
-
-    let active = true;
-    outPatientService
-      .listPatientOptions()
-      .then((options) => {
-        if (active) setPatientOptions(options);
-      })
-      .catch((error) => {
-        moduleLogger.error("Unable to load patient options", error, {
-          section: config.id,
-        });
-        if (active) {
-          toast.error({
-            title: "Unable to load patients",
-            description: "Check that the Go API and MySQL are running.",
-          });
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [config.id, config.needsPatientOptions]);
-
-  const loadRecords = useCallback(async () => {
-    const currentRequest = ++requestNumber.current;
-    setLoading(true);
-    setLoadError("");
-
-    try {
-      const result: PaginatedResult<TRecord> = await list({
-        page,
-        pageSize,
-        search,
-        sortBy: sortValue,
-        sortDirection,
-      });
-
-      if (currentRequest !== requestNumber.current) return;
-
-      setRecords(result.items);
-      setPagination(result.pagination);
-      setSelectedIds((current) =>
-        current.filter((id) =>
-          result.items.some((record) => record.id === id),
-        ),
-      );
-
-      if (
-        result.pagination.totalPages > 0 &&
-        page > result.pagination.totalPages
-      ) {
-        setPage(result.pagination.totalPages);
-      }
-    } catch (error) {
-      if (currentRequest !== requestNumber.current) return;
-
-      const message =
-        error instanceof Error ? error.message : "Unable to load records.";
-      setRecords([]);
-      setPagination((current) => ({ ...current, totalItems: 0 }));
-      setLoadError(message);
-      moduleLogger.error("Unable to load records", error, {
-        section: config.id,
-      });
-    } finally {
-      if (currentRequest === requestNumber.current) setLoading(false);
-    }
-  }, [
-    config.id,
-    list,
-    page,
-    pageSize,
-    reloadVersion,
-    search,
-    sortDirection,
-    sortValue,
-  ]);
-
-  useEffect(() => {
-    void loadRecords();
-  }, [loadRecords]);
+    const recordIds = new Set(records.map((record) => record.id));
+    setSelectedIds((current) =>
+      current.filter((id) => recordIds.has(id)),
+    );
+  }, [records]);
 
   const changeView = (nextView: OutPatientViewId) => {
     setPendingSave(null);
@@ -213,12 +177,8 @@ const OutPatientModule = <
       setEditingRecord(null);
       setSelectedIds([]);
       setView("list");
-
-      if (page !== 1) {
-        setPage(1);
-      } else {
-        setReloadVersion((current) => current + 1);
-      }
+      clearCache();
+      setPage(1);
     } catch (error) {
       moduleLogger.error("Unable to save out patient record", error, {
         section: config.id,
@@ -255,9 +215,10 @@ const OutPatientModule = <
       setSelectedIds([]);
 
       if (deletingWholePage) {
-        setPage((current) => Math.max(1, current - 1));
+        clearCache();
+        setPage(Math.max(1, page - 1));
       } else {
-        setReloadVersion((current) => current + 1);
+        clearCache();
       }
     } catch (error) {
       moduleLogger.error("Unable to delete out patient records", error, {
@@ -280,6 +241,13 @@ const OutPatientModule = <
   const formValues = editingRecord
     ? toFormValues(editingRecord)
     : undefined;
+  const editingPatientOption =
+    editingRecord && toPatientOption
+      ? toPatientOption(editingRecord)
+      : undefined;
+  const availablePatientOptions = editingPatientOption
+    ? [editingPatientOption]
+    : [];
   const title =
     view === "list"
       ? config.listTitle
@@ -291,7 +259,7 @@ const OutPatientModule = <
     <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-white p-4">
       <OutPatientToolbar
         title={title}
-        totalItems={pagination.totalItems}
+        totalItems={totalItems}
         view={view}
         createLabel={`New ${config.singular}`}
         search={searchInput}
@@ -328,6 +296,8 @@ const OutPatientModule = <
               selectedIds={selectedIds}
               loading={loading}
               tableMinWidth={config.tableMinWidth}
+              loadingMore={loadingMore}
+              hasMore={hasMoreInPage}
               emptyTitle={
                 loadError
                   ? "Unable to load records"
@@ -350,20 +320,19 @@ const OutPatientModule = <
               onSelectionChange={setSelectedIds}
               onEdit={beginEdit}
               onDelete={setPendingDeleteIds}
+              onLoadMore={loadMore}
             />
           </div>
 
           <Pagination
-            page={pagination.page}
+            page={page}
             pageSize={pageSize}
-            totalItems={pagination.totalItems}
-            pageSizeOptions={[10, 25, 50]}
+            totalItems={totalItems}
+            loadedItems={records.length}
+            pageSizeOptions={[10, 20, 50]}
             compact
             onPageChange={setPage}
-            onPageSizeChange={(nextPageSize) => {
-              setPageSize(nextPageSize);
-              setPage(1);
-            }}
+            onPageSizeChange={setPageSize}
           />
         </>
       ) : (
@@ -371,7 +340,8 @@ const OutPatientModule = <
           <EntryForm
             key={`${config.id}-${editingRecord?.id ?? "new"}`}
             initialValues={formValues}
-            patientOptions={patientOptions}
+            patientOptions={availablePatientOptions}
+            loadPatientOptions={loadPatientOptions}
             saving={saving}
             submitLabel={editingRecord ? "Update" : "Save"}
             onSubmit={setPendingSave}

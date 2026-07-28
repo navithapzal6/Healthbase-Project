@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Eraser, Save } from "lucide-react";
 
 import {
@@ -13,8 +12,7 @@ import {
   Typeahead,
 } from "@/src/components/ui";
 import { todayAppDate } from "@/src/core/date";
-import { clearFieldError } from "@/src/core/forms";
-import type { ValidationErrors } from "@/src/core/validation";
+import { useValidatedForm } from "@/src/core/forms";
 
 import type {
   TransactionFormRendererProps,
@@ -42,34 +40,25 @@ const TransactionEntryForm = ({
   onContactChange,
   onSubmit,
 }: TransactionFormRendererProps) => {
-  const [values, setValues] = useState<TransactionFormValues>(
-    emptyValues(selectedContactId),
-  );
-  const [errors, setErrors] = useState<
-    ValidationErrors<TransactionFormValues>
-  >({});
-
-  const set = <TField extends keyof TransactionFormValues>(
-    field: TField,
-    value: TransactionFormValues[TField],
-  ) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => clearFieldError(current, field));
-  };
+  const {
+    values,
+    errors,
+    setField: set,
+    resetForm,
+    handleSubmit: submit,
+  } = useValidatedForm<TransactionFormValues>({
+    createInitialValues: () => emptyValues(selectedContactId),
+    validate: (formValues) =>
+      validateTransactionForm(formValues, singular),
+    onValidSubmit: (formValues, { resetForm: resetValidForm }) => {
+      onSubmit(formValues, () =>
+        resetValidForm(emptyValues(formValues.contactId)),
+      );
+    },
+  });
 
   const clear = () => {
-    setValues(emptyValues(values.contactId));
-    setErrors({});
-  };
-
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const result = validateTransactionForm(values, singular);
-    setErrors(result.errors);
-
-    if (!result.isValid) return;
-    onSubmit(result.values, clear);
+    resetForm(emptyValues(values.contactId));
   };
 
   return (

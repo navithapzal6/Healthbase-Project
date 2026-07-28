@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   DatePicker,
@@ -9,8 +9,7 @@ import {
   Select,
   Textarea,
 } from "@/src/components/ui";
-import { clearFieldError } from "@/src/core/forms";
-import type { ValidationErrors } from "@/src/core/validation";
+import { useValidatedForm } from "@/src/core/forms";
 
 import {
   bloodGroupOptions,
@@ -43,43 +42,23 @@ const PatientForm = ({
   submitLabel = "Save",
   onSubmit,
 }: OutPatientEntryFormProps<PatientFormValues>) => {
-  const [values, setValues] = useState<PatientFormValues>(
-    () => initialValues ?? emptyValues(),
-  );
-  const [errors, setErrors] = useState<ValidationErrors<PatientFormValues>>(
-    {},
-  );
-
-  useEffect(() => {
-    setValues(initialValues ?? emptyValues());
-    setErrors({});
-  }, [initialValues]);
+  const {
+    values,
+    errors,
+    setField: set,
+    resetForm: clear,
+    handleSubmit: submit,
+  } = useValidatedForm<PatientFormValues>({
+    createInitialValues: () => initialValues ?? emptyValues(),
+    validate: validatePatientForm,
+    onValidSubmit: onSubmit,
+    resetKey: initialValues,
+  });
 
   const age = useMemo(
     () => calculateAge(values.dateOfBirth),
     [values.dateOfBirth],
   );
-
-  const set = <TField extends keyof PatientFormValues>(
-    field: TField,
-    value: PatientFormValues[TField],
-  ) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => clearFieldError(current, field));
-  };
-
-  const clear = () => {
-    setValues(emptyValues());
-    setErrors({});
-  };
-
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const result = validatePatientForm(values);
-    setErrors(result.errors);
-
-    if (result.isValid) onSubmit(result.values);
-  };
 
   return (
     <Form

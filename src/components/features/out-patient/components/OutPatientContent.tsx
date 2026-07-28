@@ -13,12 +13,24 @@ import {
 } from "../forms";
 import OutPatientModule from "./OutPatientModule";
 import { outPatientService } from "../api/outPatientService";
-import type { OutPatientContentProps } from "../types";
+import type {
+  ConsultationRecord,
+  OutPatientContentProps,
+  PrescriptionRecord,
+} from "../types";
 import {
   consultationToFormValues,
   patientToFormValues,
   prescriptionToFormValues,
 } from "../utils";
+
+const patientOptionFromRecord = (
+  record: ConsultationRecord | PrescriptionRecord,
+) => ({
+  value: String(record.patientId),
+  label: record.patientName,
+  description: record.patientUhid,
+});
 
 const OutPatientContent = ({ section }: OutPatientContentProps) => {
   if (section.id === "consultation") {
@@ -33,6 +45,8 @@ const OutPatientContent = ({ section }: OutPatientContentProps) => {
         update={outPatientService.updateConsultation}
         remove={outPatientService.deleteConsultations}
         toFormValues={consultationToFormValues}
+        loadPatientOptions={outPatientService.loadPatientOptions}
+        toPatientOption={patientOptionFromRecord}
       />
     );
   }
@@ -49,6 +63,8 @@ const OutPatientContent = ({ section }: OutPatientContentProps) => {
         update={outPatientService.updatePrescription}
         remove={outPatientService.deletePrescriptions}
         toFormValues={prescriptionToFormValues}
+        loadPatientOptions={outPatientService.loadPatientOptions}
+        toPatientOption={patientOptionFromRecord}
       />
     );
   }

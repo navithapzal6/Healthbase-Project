@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Eraser, Save } from "lucide-react";
 
@@ -11,8 +10,7 @@ import {
   Input,
   Textarea,
 } from "@/src/components/ui";
-import { clearFieldError } from "@/src/core/forms";
-import type { ValidationErrors } from "@/src/core/validation";
+import { useValidatedForm } from "@/src/core/forms";
 
 import type {
   LedgerEntryFormProps,
@@ -26,40 +24,25 @@ const emptyValues: LedgerFormValues = {
 };
 
 const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
-  const [values, setValues] = useState(emptyValues);
-  const [errors, setErrors] = useState<ValidationErrors<LedgerFormValues>>({});
   const [pendingValues, setPendingValues] =
     useState<LedgerFormValues | null>(null);
   const [saving, setSaving] = useState(false);
+  const {
+    values,
+    errors,
+    setField: updateField,
+    resetForm: clearForm,
+    handleSubmit,
+  } = useValidatedForm<LedgerFormValues>({
+    createInitialValues: () => ({ ...emptyValues }),
+    validate: validateLedgerForm,
+    onValidSubmit: setPendingValues,
+    resetKey: section.id,
+  });
 
   useEffect(() => {
-    setValues(emptyValues);
-    setErrors({});
     setPendingValues(null);
   }, [section.id]);
-
-  const clearForm = () => {
-    setValues(emptyValues);
-    setErrors({});
-  };
-
-  const updateField = <TField extends keyof LedgerFormValues>(
-    field: TField,
-    value: LedgerFormValues[TField],
-  ) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => clearFieldError(current, field));
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const result = validateLedgerForm(values);
-    setErrors(result.errors);
-
-    if (!result.isValid) return;
-    setPendingValues(result.values);
-  };
 
   const confirmSave = async () => {
     if (!pendingValues) return;
@@ -120,7 +103,7 @@ const LedgerEntryForm = ({ section, onSave }: LedgerEntryFormProps) => {
             variant="outline"
             size="sm"
             leftIcon={<Eraser size={16} />}
-            onClick={clearForm}
+            onClick={() => clearForm()}
           >
             Clear
           </Button>

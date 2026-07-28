@@ -1,2 +1,8 @@
 export { default as Typeahead } from "./Typeahead";
-export type { TypeaheadOption, TypeaheadProps } from "./types";
+export type {
+  TypeaheadLoadRequest,
+  TypeaheadLoadResult,
+  TypeaheadOption,
+  TypeaheadOptionsLoader,
+  TypeaheadProps,
+} from "./types";

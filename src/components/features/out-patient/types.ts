@@ -4,6 +4,7 @@ import type {
   ListSortDirection,
   ListSortOption,
 } from "@/src/components/page/list";
+import type { TypeaheadOptionsLoader } from "@/src/components/ui";
 
 export type OutPatientSectionId =
   | "patient"
@@ -124,18 +125,21 @@ export interface PatientOption {
 }
 
 export interface ListRecordsParams {
-  page: number;
-  pageSize: number;
+  cursor?: string | null;
+  limit: number;
+  includeTotal?: boolean;
   search: string;
   sortBy: string;
   sortDirection: ListSortDirection;
+  signal?: AbortSignal;
 }
 
 export interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
+  limit: number;
+  totalItems?: number;
+  totalPages?: number;
+  nextCursor?: string;
+  hasMore: boolean;
 }
 
 export interface PaginatedResult<TRecord> {
@@ -175,6 +179,7 @@ export interface OutPatientModuleConfig {
 export interface OutPatientEntryFormProps<TValues extends object> {
   initialValues?: TValues;
   patientOptions?: PatientOption[];
+  loadPatientOptions?: TypeaheadOptionsLoader;
   saving?: boolean;
   submitLabel?: string;
   onSubmit: (values: TValues) => void;
@@ -192,4 +197,6 @@ export interface OutPatientModuleProps<
   update: (id: number, values: TValues) => Promise<TRecord>;
   remove: (ids: number[]) => Promise<number>;
   toFormValues: (record: TRecord) => TValues;
+  loadPatientOptions?: TypeaheadOptionsLoader;
+  toPatientOption?: (record: TRecord) => PatientOption;
 }

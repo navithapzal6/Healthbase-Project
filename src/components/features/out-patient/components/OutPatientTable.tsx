@@ -2,6 +2,7 @@
 
 import {
   ListCheckbox,
+  ListLoadSentinel,
   ListRowActions,
 } from "@/src/components/page/list";
 import {
@@ -24,6 +25,8 @@ interface OutPatientTableProps<TRecord extends { id: number }> {
   columns: OutPatientColumn<TRecord>[];
   selectedIds: number[];
   loading?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
   tableMinWidth: number;
   emptyTitle: string;
   emptyDescription?: string;
@@ -31,6 +34,7 @@ interface OutPatientTableProps<TRecord extends { id: number }> {
   onSelectionChange: (ids: number[]) => void;
   onEdit: (record: TRecord) => void;
   onDelete: (ids: number[]) => void;
+  onLoadMore?: () => void | Promise<void>;
 }
 
 const alignClass = {
@@ -44,6 +48,8 @@ const OutPatientTable = <TRecord extends { id: number }>({
   columns,
   selectedIds,
   loading = false,
+  loadingMore = false,
+  hasMore = false,
   tableMinWidth,
   emptyTitle,
   emptyDescription,
@@ -51,6 +57,7 @@ const OutPatientTable = <TRecord extends { id: number }>({
   onSelectionChange,
   onEdit,
   onDelete,
+  onLoadMore,
 }: OutPatientTableProps<TRecord>) => {
   const pageIds = records.map((record) => record.id);
   const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
@@ -175,6 +182,14 @@ const OutPatientTable = <TRecord extends { id: number }>({
         <TableEmptyState
           title={emptyTitle}
           description={emptyDescription}
+        />
+      )}
+
+      {!loading && onLoadMore && (
+        <ListLoadSentinel
+          hasMore={hasMore}
+          loading={loadingMore}
+          onLoadMore={onLoadMore}
         />
       )}
     </TableContainer>

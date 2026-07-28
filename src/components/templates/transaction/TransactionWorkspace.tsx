@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button, ConfirmationDialog, Input, Select, toast } from "@/src/components/ui";
 import { logger } from "@/src/core/logger";
-import { parseAppDate } from "@/src/core/date";
+import { useChunkedList } from "@/src/core/query";
 import {
   ListBulkActions,
   ListSortMenu,
@@ -15,6 +15,7 @@ import {
 import { SplitModal } from "@/src/components/templates/split-modal";
 import type {
   TransactionFormValues,
+  TransactionListFilters,
   TransactionRecord,
   TransactionWorkspaceProps,
 } from "./types";
@@ -41,55 +42,52 @@ const TransactionWorkspace = ({
   TableView,
 }: TransactionWorkspaceProps) => {
   const ModuleIcon = config.icon;
-  const [records, setRecords] = useState<TransactionRecord[]>(() => [
-    ...config.initialRecords,
-  ]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [historyRecords, setHistoryRecords] = useState<TransactionRecord[]>([]);
   const [historySelectedIds, setHistorySelectedIds] = useState<string[]>([]);
   const [historySortValue, setHistorySortValue] = useState("date");
   const [historySortDirection, setHistorySortDirection] =
     useState<ListSortDirection>("desc");
-  const [historyPage, setHistoryPage] = useState(1);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    let active = true;
+  const listState = useChunkedList<
+    TransactionRecord,
+    TransactionListFilters
+  >({
+    cacheKey: `transaction:${config.prefix}:list`,
+    fetchChunk: service.listChunk,
+    search,
+    sortBy: "date",
+    sortDirection: "desc",
+    filters: { paymentMode: mode },
+    chunkSize: 10,
+    initialPageSize: 10,
+    cachePolicy: "memory",
+  });
 
-    setRecords([...config.initialRecords]);
-    setSelectedIds([]);
-    setHistoryRecords([]);
-    setHistorySelectedIds([]);
-    setSelectedContactId("");
-    setPage(1);
-    setHistoryPage(1);
+  const historyState = useChunkedList<
+    TransactionRecord,
+    TransactionListFilters
+  >({
+    cacheKey: `transaction:${config.prefix}:history:${selectedContactId}`,
+    fetchChunk: service.listByContactChunk,
+    sortBy: historySortValue,
+    sortDirection: historySortDirection,
+    filters: { contactId: selectedContactId },
+    chunkSize: 10,
+    initialPageSize: historyPageSize,
+    cachePolicy: "memory",
+    enabled: Boolean(selectedContactId),
+  });
 
-    service
-      .list()
-      .then((data) => {
-        if (active) setRecords(data);
-      })
-      .catch((error) => {
-        transactionWorkspaceLogger.error(
-          "Unable to load transaction records",
-          error,
-          { module: config.singular },
-        );
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [config, service]);
+  const records = listState.items;
+  const historyRecords = historyState.items;
 
   useEffect(() => {
     const recordIds = new Set(records.map((record) => record.id));
@@ -104,81 +102,15 @@ const TransactionWorkspace = ({
   }, [historyRecords]);
 
   useEffect(() => {
-    let active = true;
-
     setHistorySelectedIds([]);
-    setHistoryPage(1);
+    historyState.setPage(1);
+  }, [selectedContactId]);
 
-    if (!selectedContactId) {
-      setHistoryRecords([]);
-      return () => {
-        active = false;
-      };
-    }
-
-    service
-      .listByContact(selectedContactId)
-      .then((data) => {
-        if (active) setHistoryRecords(data);
-      })
-      .catch((error) => {
-        transactionWorkspaceLogger.error(
-          "Unable to load contact transaction history",
-          error,
-          { module: config.singular, contactId: selectedContactId },
-        );
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedContactId, service]);
-
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-
-    return records.filter(
-      (record) =>
-        (!term ||
-          `${record.contactName} ${record.category} ${record.description} ${record.paymentMode}`
-            .toLowerCase()
-            .includes(term)) &&
-        (!mode || record.paymentMode === mode),
-    );
-  }, [mode, records, search]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageRecords = filtered.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
-  const contactHistory = useMemo(() => {
-    return [...historyRecords].sort((first, second) => {
-      const result =
-        historySortValue === "amount"
-          ? first.amount - second.amount
-          : historySortValue === "date"
-            ? (parseAppDate(first.date)?.getTime() ?? 0) -
-              (parseAppDate(second.date)?.getTime() ?? 0)
-          : String(
-              first[historySortValue as keyof TransactionRecord],
-            ).localeCompare(
-              String(second[historySortValue as keyof TransactionRecord]),
-            );
-
-      return historySortDirection === "asc" ? result : -result;
-    });
-  }, [historyRecords, historySortDirection, historySortValue]);
-  const historyTotalPages = Math.max(
-    1,
-    Math.ceil(contactHistory.length / historyPageSize),
-  );
-  const currentHistoryPage = Math.min(historyPage, historyTotalPages);
-  const historyPageRecords = contactHistory.slice(
-    (currentHistoryPage - 1) * historyPageSize,
-    currentHistoryPage * historyPageSize,
-  );
+  const currentPage = listState.page;
+  const pageRecords = records;
+  const contactHistory = historyRecords;
+  const currentHistoryPage = historyState.page;
+  const historyPageRecords = historyRecords;
   const selectedRecord = records.find((record) =>
     selectedIds.includes(record.id),
   );
@@ -186,15 +118,10 @@ const TransactionWorkspace = ({
     historySelectedIds.includes(record.id),
   );
 
-  useEffect(() => setPage(1), [search, mode, pageSize]);
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-  useEffect(() => {
-    if (historyPage > historyTotalPages) {
-      setHistoryPage(historyTotalPages);
-    }
-  }, [historyPage, historyTotalPages]);
+    listState.setPage(1);
+    setSelectedIds([]);
+  }, [search, mode]);
 
   const saveTransaction = async () => {
     if (!pendingSave) return;
@@ -211,9 +138,11 @@ const TransactionWorkspace = ({
         amount: Number(values.amount),
       });
 
-      setRecords((current) => [created, ...current]);
+      listState.clearCache();
+      listState.setPage(1);
       if (created.contactId === selectedContactId) {
-        setHistoryRecords((current) => [created, ...current]);
+        historyState.clearCache();
+        historyState.setPage(1);
       }
       clear();
       setPendingSave(null);
@@ -257,38 +186,43 @@ const TransactionWorkspace = ({
   const deleteTransactions = async () => {
     if (!pendingDeleteIds.length) return;
     setDeleting(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    setRecords((current) =>
-      current.filter((record) => !pendingDeleteIds.includes(record.id)),
-    );
-    setSelectedIds((current) =>
-      current.filter((id) => !pendingDeleteIds.includes(id)),
-    );
-    setHistorySelectedIds((current) =>
-      current.filter((id) => !pendingDeleteIds.includes(id)),
-    );
-    setHistoryRecords((current) =>
-      current.filter((record) => !pendingDeleteIds.includes(record.id)),
-    );
+    try {
+      const deletedCount = await service.remove(pendingDeleteIds);
+      listState.clearCache();
+      historyState.clearCache();
+      setSelectedIds([]);
+      setHistorySelectedIds([]);
 
-    transactionWorkspaceLogger.info("Transactions deleted", {
-      module: config.singular,
-      count: pendingDeleteIds.length,
-      ids: pendingDeleteIds,
-    });
+      transactionWorkspaceLogger.info("Transactions deleted", {
+        module: config.singular,
+        count: deletedCount,
+        ids: pendingDeleteIds,
+      });
 
-    toast.success({
-      title: `${config.singular} deleted`,
-      description: `${pendingDeleteIds.length} ${
-        pendingDeleteIds.length === 1
-          ? config.singular.toLowerCase()
-          : config.plural.toLowerCase()
-      } removed.`,
-    });
-
-    setPendingDeleteIds([]);
-    setDeleting(false);
+      toast.success({
+        title: `${config.singular} deleted`,
+        description: `${pendingDeleteIds.length} ${
+          pendingDeleteIds.length === 1
+            ? config.singular.toLowerCase()
+            : config.plural.toLowerCase()
+        } removed.`,
+      });
+      setPendingDeleteIds([]);
+    } catch (error) {
+      transactionWorkspaceLogger.error(
+        "Unable to delete transactions",
+        error,
+        { module: config.singular, ids: pendingDeleteIds },
+      );
+      toast.error({
+        title: "Unable to delete",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -304,7 +238,7 @@ const TransactionWorkspace = ({
             </h2>
           </div>
           <p className="ml-11 mt-0.5 text-xs text-slate-500">
-            {filtered.length} of {records.length}{" "}
+            {records.length} of {listState.totalItems}{" "}
             {config.singular.toLowerCase()} records
           </p>
         </div>
@@ -355,19 +289,24 @@ const TransactionWorkspace = ({
         <TableView
           records={pageRecords}
           selectedIds={selectedIds}
+          loading={listState.loading}
+          loadingMore={listState.loadingMore}
+          hasMore={listState.hasMoreInPage}
           onSelectionChange={setSelectedIds}
           onEdit={editTransaction}
           onDelete={setPendingDeleteIds}
+          onLoadMore={listState.loadMore}
         />
       </div>
       <div className="shrink-0 pt-3">
         <Pagination
           page={currentPage}
-          pageSize={pageSize}
-          totalItems={filtered.length}
+          pageSize={listState.pageSize}
+          totalItems={listState.totalItems}
+          loadedItems={records.length}
           pageSizeOptions={[10, 20, 50]}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
+          onPageChange={listState.setPage}
+          onPageSizeChange={listState.setPageSize}
         />
       </div>
 
@@ -377,7 +316,7 @@ const TransactionWorkspace = ({
         subtitle={config.modalSubtitle}
         leftTitle={
           selectedContactId
-            ? `${config.singular} History · ${contactHistory.length} records`
+            ? `${config.singular} History · ${historyState.totalItems} records`
             : `${config.singular} History`
         }
         leftHeaderAction={
@@ -391,7 +330,7 @@ const TransactionWorkspace = ({
                 setHistorySortValue(value);
                 setHistorySortDirection(direction);
                 setHistorySelectedIds([]);
-                setHistoryPage(1);
+                historyState.setPage(1);
               }}
             />
           ) : undefined
@@ -419,20 +358,25 @@ const TransactionWorkspace = ({
                   records={historyPageRecords}
                   selectedIds={historySelectedIds}
                   hideContact
+                  loading={historyState.loading}
+                  loadingMore={historyState.loadingMore}
+                  hasMore={historyState.hasMoreInPage}
                   onSelectionChange={setHistorySelectedIds}
                   onEdit={editTransaction}
                   onDelete={setPendingDeleteIds}
+                  onLoadMore={historyState.loadMore}
                 />
               </div>
 
-              {contactHistory.length > historyPageSize && (
+              {historyState.totalItems > historyPageSize && (
                 <Pagination
                   page={currentHistoryPage}
                   pageSize={historyPageSize}
-                  totalItems={contactHistory.length}
+                  totalItems={historyState.totalItems}
+                  loadedItems={contactHistory.length}
                   compact
                   onPageChange={(nextPage) => {
-                    setHistoryPage(nextPage);
+                    historyState.setPage(nextPage);
                     setHistorySelectedIds([]);
                   }}
                 />

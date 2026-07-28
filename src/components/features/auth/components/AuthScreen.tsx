@@ -185,7 +185,7 @@ const AuthScreen = ({
           <p className="mt-2 text-sm leading-6 text-slate-500">
             {isLogin
               ? "Enter your credentials to continue to the dashboard."
-              : "Enter your details to create your Stonebuild account."}
+              : "Enter your details to create your Healthbase account."}
           </p>
         </div>
 

@@ -117,7 +117,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       <ConfirmationDialog
         open={logoutConfirmationOpen}
-        title="Logout from Stonebuild?"
+        title="Logout from Healthbase?"
         description="Your current session will end and you will return to the login page."
         confirmText="Logout"
         variant="primary"

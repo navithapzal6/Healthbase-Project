@@ -27,7 +27,7 @@ const BrowserInteractionGuard = ({
 
     const preventDeveloperShortcuts = (event: KeyboardEvent) => {
       if (!disableDeveloperShortcuts) return;
-
+      if (typeof event.key !== "string") return;      
       const key = event.key.toLowerCase();
       const isFunctionKey = event.key === "F12";
       const isWindowsShortcut =

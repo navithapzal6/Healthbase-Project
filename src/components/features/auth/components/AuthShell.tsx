@@ -7,7 +7,7 @@ import type { AuthShellProps } from "../types";
 const AuthShell = ({
   mode,
   children,
-  brandName = "Stonebuild",
+  brandName = "Healthbase",
   showSocialLogin = false,
   socialContent,
 }: AuthShellProps) => {
@@ -44,13 +44,13 @@ const AuthShell = ({
             </h2>
             <p className="mt-4 text-sm leading-6 text-white/75">
               {isLogin
-                ? "Sign in to access contacts, ledger, reports and the complete Stonebuild workspace."
+                ? "Sign in to access contacts, ledger, reports and the complete Healthbase workspace."
                 : "Keep your teams, contacts and daily business operations connected in one place."}
             </p>
           </div>
 
           <p className="relative text-xs text-white/60">
-            Stonebuild ERP · Secure workspace
+            Healthbase ERP · Secure workspace
           </p>
         </section>
 
